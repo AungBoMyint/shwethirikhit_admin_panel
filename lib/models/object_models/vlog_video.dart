@@ -6,6 +6,7 @@ class VlogVideo {
   final int minutes;
   final DateTime dateTime;
   final int? order;
+  final List? nameList;
   const VlogVideo({
     required this.id,
     required this.title,
@@ -14,6 +15,7 @@ class VlogVideo {
     required this.minutes,
     required this.dateTime,
     required this.order,
+    required this.nameList,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,6 +26,7 @@ class VlogVideo {
         'minutes': minutes,
         'dateTime': dateTime.toIso8601String(),
         'order': order,
+        'nameList': nameList,
       };
 
   factory VlogVideo.fromJson(Map<String, dynamic> json) => VlogVideo(
@@ -34,5 +37,6 @@ class VlogVideo {
         minutes: json["minutes"],
         dateTime: DateTime.tryParse(json["dateTime"]) ?? DateTime.now(),
         order: json["order"] as int?,
+        nameList: json["nameList"] ?? <String>[],
       );
 }

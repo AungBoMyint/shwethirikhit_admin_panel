@@ -28,21 +28,22 @@ class AppTheme {
     ),
   );
   static ThemeData lightTheme() {
+    final colorCode = int.parse('562626', radix: 16);
     return ThemeData(
       scaffoldBackgroundColor: Colors.white,
-      primarySwatch: const MaterialColor(
-        0xffE8EC37,
+      primarySwatch: MaterialColor(
+        0xff562626,
         <int, Color>{
-          50: Color(0xffF7FA88),
-          100: Color(0xffF2F57A),
-          200: Color(0xffEDF26C),
-          300: Color(0xffE8EC5F),
-          400: Color(0xffE3E951),
-          500: Color(0xffE8EC37),
-          600: Color(0xffD1D52D),
-          700: Color(0xffBABF24),
-          800: Color(0xffA3A41A),
-          900: Color(0xff8C9311),
+          50: Color(colorCode),
+          100: Color(colorCode),
+          200: Color(colorCode),
+          300: Color(colorCode),
+          400: Color(colorCode),
+          500: Color(colorCode),
+          600: Color(colorCode),
+          700: Color(colorCode),
+          800: Color(colorCode),
+          900: Color(colorCode),
         },
       ),
       brightness: Brightness.light,
@@ -71,7 +72,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xffd6da21),
+          backgroundColor: const Color(0xff562626),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(
               Radius.circular(
@@ -109,21 +110,22 @@ class AppTheme {
     ),
   );
   static ThemeData darkTheme() {
+    final colorCode = int.parse('562626', radix: 16);
     return ThemeData(
       scaffoldBackgroundColor: Colors.black,
-      primarySwatch: const MaterialColor(
-        0xffd6da21,
+      primarySwatch: MaterialColor(
+        0xFF562626,
         <int, Color>{
-          50: Color(0xfff6f7b6),
-          100: Color(0xffeae88d),
-          200: Color(0xffddd964),
-          300: Color(0xffd1cc3b),
-          400: Color(0xffc5c30f),
-          500: Color(0xffb3ad00),
-          600: Color(0xffa09b00),
-          700: Color(0xff8d8800),
-          800: Color(0xff7a7600),
-          900: Color(0xff635f00),
+          50: Color(colorCode),
+          100: Color(colorCode),
+          200: Color(colorCode),
+          300: Color(colorCode),
+          400: Color(colorCode),
+          500: Color(colorCode),
+          600: Color(colorCode),
+          700: Color(colorCode),
+          800: Color(colorCode),
+          900: Color(colorCode),
         },
       ),
       brightness: Brightness.light,
@@ -153,7 +155,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xffd6da21),
+          backgroundColor: const Color(0xff562626),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(
               Radius.circular(

@@ -29,6 +29,24 @@ void showCustomDialog(
   );
 }
 
+successSnap(String title) {
+  Get.snackbar(
+    title,
+    "",
+    backgroundColor: Colors.green,
+    colorText: Colors.white,
+  );
+}
+
+errorSnap(String title) {
+  Get.snackbar(
+    title,
+    "",
+    backgroundColor: Colors.red,
+    colorText: Colors.white,
+  );
+}
+
 showLoading(BuildContext context) {
   showGeneralDialog(
     context: context,

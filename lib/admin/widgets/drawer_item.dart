@@ -33,6 +33,7 @@ class DrawerItem extends GetView<AdminUiController> {
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             SizedBox(

@@ -62,7 +62,7 @@ class AdminLoginPage extends GetView<AdminLoginController> {
                         color: Theme.of(context).iconTheme.color,
                       ),
                       title: Text(
-                        "DehatFresh",
+                        "Shwe Thiri Khit",
                         style: textTheme.displayLarge?.copyWith(
                           fontSize: 25,
                         ),
@@ -71,7 +71,7 @@ class AdminLoginPage extends GetView<AdminLoginController> {
                     verticalSpace(),
                     //Welcome
                     Text(
-                      "Welcome to DehatFresh Admin! 👋",
+                      "Welcome to Shwe Thiri Khit Admin! 👋",
                       style: GoogleFonts.inter(
                         color: Theme.of(context).textTheme.displaySmall?.color,
                         fontSize: 20,
@@ -175,6 +175,11 @@ class AdminLoginPage extends GetView<AdminLoginController> {
                           Expanded(
                             child: Obx(() {
                               return CheckboxListTile(
+                                checkboxShape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                  color: Colors.black,
+                                )),
+                                checkColor: Theme.of(context).primaryColor,
                                 contentPadding: EdgeInsets.zero,
                                 controlAffinity:
                                     ListTileControlAffinity.leading,

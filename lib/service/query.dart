@@ -8,6 +8,7 @@ import '../models/object_models/type.dart';
 import '../models/object_models/vlog_video.dart';
 import 'reference.dart';
 
+Query<ExpertModel> allExpertQuery() => expertsCollection();
 Query<ExpertModel> expertQuery(String typeID) =>
     expertsCollection().where("type", isEqualTo: typeID);
 Query<Category> homeCategoryQuery =

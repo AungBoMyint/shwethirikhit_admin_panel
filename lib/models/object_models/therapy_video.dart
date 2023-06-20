@@ -7,6 +7,7 @@ class TherapyVideo {
   final int minutes;
   final DateTime dateTime;
   final int? order;
+  final List? nameList;
   const TherapyVideo({
     required this.id,
     required this.parentID,
@@ -16,6 +17,7 @@ class TherapyVideo {
     required this.minutes,
     required this.dateTime,
     required this.order,
+    required this.nameList,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,7 @@ class TherapyVideo {
         'minutes': minutes,
         'dateTime': dateTime.toIso8601String(),
         'order': order,
+        'nameList': nameList,
       };
 
   factory TherapyVideo.fromJson(Map<String, dynamic> json) => TherapyVideo(
@@ -38,5 +41,6 @@ class TherapyVideo {
         minutes: json["minutes"],
         dateTime: DateTime.tryParse(json["dateTime"]) ?? DateTime.now(),
         order: json["order"] as int?,
+        nameList: json["nameList"] ?? <String>[],
       );
 }

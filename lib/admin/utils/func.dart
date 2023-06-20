@@ -106,3 +106,11 @@ String? validateEmail(String? email) {
   // Email is valid
   return null;
 }
+
+String? stringValidator(String key, String? value) {
+  if (value == null || value.isEmpty) {
+    return "$key is required";
+  } else {
+    return null;
+  }
+}

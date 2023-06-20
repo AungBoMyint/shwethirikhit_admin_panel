@@ -13,6 +13,8 @@ class ExpertModel {
   final String jobTitle;
   final String jobDescription;
   final String propertyAddress;
+  final List? nameList;
+  final DateTime? dateTime;
 
   ExpertModel({
     this.id,
@@ -29,6 +31,8 @@ class ExpertModel {
     required this.jobTitle,
     required this.jobDescription,
     required this.propertyAddress,
+    required this.nameList,
+    required this.dateTime,
   });
 
   factory ExpertModel.fromJson(Map<String, dynamic> json, String id) =>
@@ -47,6 +51,8 @@ class ExpertModel {
         jobTitle: json['jobTitle'] as String,
         jobDescription: json['jobDescription'] as String,
         propertyAddress: json['propertyAddress'] as String,
+        nameList: json["nameList"] ?? <String>[],
+        dateTime: DateTime.tryParse(json["dateTime"] ?? ""),
       );
 
   Map<String, dynamic> toJson() => {
@@ -63,5 +69,7 @@ class ExpertModel {
         'jobTitle': jobTitle,
         'jobDescription': jobDescription,
         'propertyAddress': propertyAddress,
+        'nameList': nameList,
+        'dateTime': dateTime!.toIso8601String(),
       };
 }

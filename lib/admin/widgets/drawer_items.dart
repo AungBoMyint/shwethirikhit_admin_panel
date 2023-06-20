@@ -59,6 +59,8 @@ class DrawerItems extends GetView<AdminLoginController> {
                 //News
                 ExpandablePanel(
                   theme: ExpandableThemeData(
+                    expandIcon: null,
+                    collapseIcon: null,
                     iconColor: Colors.grey,
                     tapHeaderToExpand: true,
                     iconPadding: EdgeInsets.zero,
@@ -108,7 +110,8 @@ class DrawerItems extends GetView<AdminLoginController> {
                                   .changePageType(PageType.newsItems());
                             },
                             title: "Items",
-                            isSelected: pageType == PageType.newsItems(),
+                            isSelected: pageType == PageType.newsItems() ||
+                                pageType == PageType.newsItemsAdd(),
                           ),
                         ],
                       );

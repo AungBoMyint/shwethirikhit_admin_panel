@@ -1,6 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart' hide DrawerHeader;
 import 'package:get/get.dart';
+import 'package:pizza/admin/view/news/item_add_page.dart';
+import 'package:pizza/admin/view/news/item_page.dart';
+import 'package:pizza/admin/view/news/type_page.dart';
 import 'dart:developer';
 import '../../constant/icon.dart';
 import '../../models/rbpoint.dart';
@@ -185,9 +188,9 @@ class DesktopXLSizeLayout extends StatelessWidget {
                           initial: (_) => Container(),
                           news: (_) => Container(),
                           newsSlider: (_) => SliderPage(),
-                          newsType: (_) => Container(),
-                          newsItems: (_) => Container(),
-                          newsItemsAdd: (_) => Container(),
+                          newsType: (_) => TypePage(),
+                          newsItems: (_) => ItemPage(),
+                          newsItemsAdd: (_) => ItemAddPage(),
                           vlog: (_) => Container(),
                           vlogAdd: (_) => Container(),
                           customers: (_) => Container(),
