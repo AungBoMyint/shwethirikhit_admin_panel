@@ -27,6 +27,7 @@ class DrawerItems extends GetView<AdminLoginController> {
   Widget build(BuildContext context) {
     final AdminLoginController alController = Get.find();
     final AdminUiController adminUiController = Get.find();
+    final pageType = adminUiController.pageType.value;
     return Expanded(
       flex: adminUiController.rbPoint.value!.getOrElse(() => RBPoint.xl()).map(
           xl: (_) => 2, desktop: (_) => 2, tablet: (_) => 1, mobile: (_) => 1),
@@ -68,8 +69,9 @@ class DrawerItems extends GetView<AdminLoginController> {
                   header: DrawerItem(
                     onTap: null,
                     textTheme: textTheme,
-                    isSelected:
-                        false /* pageType == const PageType.products() */,
+                    isSelected: pageType == PageType.newsSlider() ||
+                        pageType == PageType.newsType() ||
+                        pageType == PageType.newsItems(),
                     imageIcon: AdminIcon.news,
                     label: "News",
                   ),

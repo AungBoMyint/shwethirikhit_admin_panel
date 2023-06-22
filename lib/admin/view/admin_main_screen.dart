@@ -1,6 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart' hide DrawerHeader;
 import 'package:get/get.dart';
+import 'package:pizza/admin/view/affirmations/categories_page.dart';
+import 'package:pizza/admin/view/affirmations/items_page.dart';
+import 'package:pizza/admin/view/affirmations/type_page.dart';
 import 'package:pizza/admin/view/news/item_add_page.dart';
 import 'package:pizza/admin/view/news/item_page.dart';
 import 'package:pizza/admin/view/news/type_page.dart';
@@ -204,9 +207,10 @@ class DesktopXLSizeLayout extends StatelessWidget {
                           therapyItems: (_) => TherapyVideosPage(),
                           therapyItemsAdd: (_) => Container(),
                           affirmations: (_) => Container(),
-                          affirmationsCategory: (_) => Container(),
-                          affirmationsType: (_) => Container(),
-                          affirmationsItems: (_) => Container(),
+                          affirmationsCategory: (_) =>
+                              AffirmationsCategoriesPage(),
+                          affirmationsType: (_) => AffirmationsTypePage(),
+                          affirmationsItems: (_) => AffirmationsItemsPage(),
                           affirmationsItemsAdd: (_) => Container(),
                           settings: (_) => Container(),
                           updateProfile: (_) => Container(),

@@ -124,7 +124,7 @@ class TherapyVideosPage extends StatelessWidget {
 
                         Expanded(child: Container()),
                         CreateButton(
-                          title: "Create Therapy Video",
+                          title: "Create Video",
                           onPressed: () {
                             //TODO:Vlog Create Form
                             Get.dialog(

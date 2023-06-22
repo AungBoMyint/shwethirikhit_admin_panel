@@ -25,6 +25,8 @@ Query<Music> affirmationsCategoryMusicsQuery(String categoryID) =>
     musicCollection()
         .where("categoryID", isEqualTo: categoryID)
         .orderBy("dateTime");
+Query<Music> allAffirmationsMusicsQuery() =>
+    musicCollection().orderBy("dateTime");
 
 Query<VlogVideo> vlogVideoQuery =
     vlogVideoCollection().orderBy("dateTime", descending: true);

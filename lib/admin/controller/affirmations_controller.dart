@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:get/get.dart';
+import 'package:pizza/models/object_models/music.dart';
 import '../../models/object_models/category.dart';
 import '../../models/object_models/expert.dart';
 import '../../models/object_models/type.dart';
@@ -12,14 +13,15 @@ import '../utils/debouncer.dart';
 class AffirmationsController extends GetxController {
   //Left refer to View
   //Right refer to Upload,Update
-  Rxn<Query<Category>> sliderQuery = Rxn<Query<Category>>(homeCategoryQuery);
-  Rxn<Query<ItemType>> typeQuery = Rxn<Query<ItemType>>(homeTypeQuery);
-  Rxn<Query<ExpertModel>> itemsQuery =
-      Rxn<Query<ExpertModel>>(allExpertQuery());
+  Rxn<Query<Category>> sliderQuery =
+      Rxn<Query<Category>>(affirmationsCategoryQuery);
+  Rxn<Query<ItemType>> typeQuery = Rxn<Query<ItemType>>(affirmationsTypeQuery);
+  Rxn<Query<Music>> itemsQuery =
+      Rxn<Query<Music>>(allAffirmationsMusicsQuery());
   final debouncer = Debouncer(milliseconds: 800);
   FirestoreQueryBuilderSnapshot<Category>? sliderSnapshot;
   FirestoreQueryBuilderSnapshot<ItemType>? typeSnapshot;
-  FirestoreQueryBuilderSnapshot<ExpertModel>? itemsSnapshot;
+  FirestoreQueryBuilderSnapshot<Music>? itemsSnapshot;
 
   final ScrollController sliderScrollController =
       ScrollController(initialScrollOffset: 0);
@@ -37,28 +39,28 @@ class AffirmationsController extends GetxController {
 
   void startSliderSearch(String value) {
     if (value.isNotEmpty) {
-      sliderQuery.value = homeCategoryQuery.where("nameList",
+      sliderQuery.value = affirmationsCategoryQuery.where("nameList",
           arrayContains: value.toLowerCase());
     } else {
-      sliderQuery.value = homeCategoryQuery;
+      sliderQuery.value = affirmationsCategoryQuery;
     }
   }
 
   void startTypeSearch(String value) {
     if (value.isNotEmpty) {
-      typeQuery.value =
-          homeTypeQuery.where("nameList", arrayContains: value.toLowerCase());
+      typeQuery.value = affirmationsTypeQuery.where("nameList",
+          arrayContains: value.toLowerCase());
     } else {
-      typeQuery.value = homeTypeQuery;
+      typeQuery.value = affirmationsTypeQuery;
     }
   }
 
   void startItemSearch(String value) {
     if (value.isNotEmpty) {
-      itemsQuery.value = allExpertQuery()
+      itemsQuery.value = allAffirmationsMusicsQuery()
           .where("nameList", arrayContains: value.toLowerCase());
     } else {
-      itemsQuery.value = allExpertQuery();
+      itemsQuery.value = allAffirmationsMusicsQuery();
     }
   }
 
@@ -66,7 +68,7 @@ class AffirmationsController extends GetxController {
       sliderSnapshot = v;
   void setTypeSnapshot(FirestoreQueryBuilderSnapshot<ItemType> v) =>
       typeSnapshot = v;
-  void setItemsSnapshot(FirestoreQueryBuilderSnapshot<ExpertModel> v) =>
+  void setItemsSnapshot(FirestoreQueryBuilderSnapshot<Music> v) =>
       itemsSnapshot = v;
 
   void setSliderSelectedRow(Category item) {
@@ -85,11 +87,11 @@ class AffirmationsController extends GetxController {
     }
   }
 
-  void setItemsSelectedRow(ExpertModel item) {
+  void setItemsSelectedRow(Music item) {
     if (itemsSelectedRow.contains(item.id)) {
       itemsSelectedRow.remove(item.id);
     } else {
-      itemsSelectedRow.add(item.id!);
+      itemsSelectedRow.add(item.id);
     }
   }
 
@@ -105,10 +107,10 @@ class AffirmationsController extends GetxController {
         items == null ? [] : items.map((e) => e.data().id).toList();
   }
 
-  void setItemsSelectedAll(List<QueryDocumentSnapshot<ExpertModel>>? items) {
+  void setItemsSelectedAll(List<QueryDocumentSnapshot<Music>>? items) {
     itemsSelectedAll.value = items == null ? false : true;
     itemsSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id!).toList();
+        items == null ? [] : items.map((e) => e.data().id).toList();
   }
 
   @override

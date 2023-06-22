@@ -197,13 +197,7 @@ class ItemPage extends StatelessWidget {
                                 ),
                                 fixedWidth: 80,
                               ),
-                              DataColumn2(
-                                label: Text(
-                                  'ID',
-                                  style: titleTextStyle,
-                                ),
-                                fixedWidth: 140,
-                              ),
+
                               DataColumn(
                                 label: Text(
                                   'Name',
@@ -252,14 +246,7 @@ class ItemPage extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    DataCell(Padding(
-                                      padding: const EdgeInsets.only(right: 45),
-                                      child: Text(
-                                        item.id ?? "",
-                                        style: bodyTextStyle,
-                                        maxLines: 3,
-                                      ),
-                                    )),
+
                                     DataCell(
                                       Text(
                                         item.name,
