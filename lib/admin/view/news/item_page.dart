@@ -17,6 +17,7 @@ import '../../../models/rbpoint.dart';
 import '../../controller/admin_login_controller.dart';
 import '../../controller/admin_ui_controller.dart';
 import '../../controller/news_controller.dart';
+import '../../utils/func.dart';
 import '../../utils/space.dart';
 import '../../utils/widgets.dart';
 
@@ -128,9 +129,12 @@ class ItemPage extends StatelessWidget {
 
                         Expanded(child: Container()),
                         CreateButton(
-                            title: "Create Item",
-                            onPressed: () => controller
-                                .changePageType(PageType.newsItemsAdd())),
+                          title: "Create Item",
+                          onPressed: () {
+                            newsController.setSelectedExpertItem(right(null));
+                            controller.changePageType(PageType.newsItemsAdd());
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -168,7 +172,7 @@ class ItemPage extends StatelessWidget {
                           return DataTable2(
                             showCheckboxColumn: true,
                             scrollController:
-                                newsController.sliderScrollController,
+                                newsController.itemScrollController,
                             columnSpacing: 20,
                             horizontalMargin: 20,
                             minWidth: 600,
@@ -282,10 +286,10 @@ class ItemPage extends StatelessWidget {
                                       children: [
                                         IconButton(
                                           iconSize: 25,
-                                          onPressed:
-                                              () {} /* =>
-                                              prController.deleteItems([item]) */
-                                          ,
+                                          onPressed: () => delete<ExpertModel>(
+                                              expertsDocument(item.id ?? ""),
+                                              "Item deleting is successful.",
+                                              "Item deleting is failed."),
                                           icon: Icon(
                                             FontAwesomeIcons.trash,
                                             color: Colors.grey.shade600,
@@ -362,7 +366,7 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => prController.deleteItems<ExpertModel>(
+        onTap: () => deleteItems<ExpertModel>(
           prController.itemsSelectedRow,
           expertsCollection(),
         ),

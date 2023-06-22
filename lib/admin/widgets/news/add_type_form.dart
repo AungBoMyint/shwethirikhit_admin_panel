@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pizza/admin/utils/extensions.dart';
+import 'package:pizza/models/object_models/type.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../models/object_models/category.dart';
@@ -10,34 +11,32 @@ import '../../controller/news_controller.dart';
 import '../../utils/func.dart';
 import '../../utils/space.dart';
 
-class AddSliderForm extends StatefulWidget {
-  const AddSliderForm({
+class AddTypeForm extends StatefulWidget {
+  const AddTypeForm({
     super.key,
     required this.width,
     required this.newsController,
     required this.dropDownBorder,
-    this.category,
+    this.type,
   });
 
   final double width;
   final NewsController newsController;
   final InputBorder? dropDownBorder;
-  final Category? category;
+  final ItemType? type;
 
   @override
-  State<AddSliderForm> createState() => _AddSliderFormState();
+  State<AddTypeForm> createState() => _AddTypeFormState();
 }
 
-class _AddSliderFormState extends State<AddSliderForm> {
+class _AddTypeFormState extends State<AddTypeForm> {
   GlobalKey<FormState> formKey = GlobalKey();
   TextEditingController nameTextController = TextEditingController();
-  TextEditingController imageTextController = TextEditingController();
 
   @override
   void initState() {
-    if (!(widget.category == null)) {
-      nameTextController.text = widget.category!.name;
-      imageTextController.text = widget.category!.image;
+    if (!(widget.type == null)) {
+      nameTextController.text = widget.type!.name;
     }
     super.initState();
   }
@@ -45,7 +44,6 @@ class _AddSliderFormState extends State<AddSliderForm> {
   @override
   void dispose() {
     nameTextController.dispose();
-    imageTextController.dispose();
     super.dispose();
   }
 
@@ -69,19 +67,6 @@ class _AddSliderFormState extends State<AddSliderForm> {
               ),
             ),
             verticalSpace(),
-            TextFormField(
-              validator: (v) => stringValidator("Image", v),
-              controller: imageTextController,
-              decoration: InputDecoration(
-                border: widget.dropDownBorder,
-                disabledBorder: widget.dropDownBorder,
-                focusedBorder: widget.dropDownBorder,
-                enabledBorder: widget.dropDownBorder,
-                labelText: "Image Url",
-                floatingLabelBehavior: FloatingLabelBehavior.always,
-              ),
-            ),
-            verticalSpace(),
             ElevatedButton(
               onPressed: () {
                 if (formKey.currentState?.validate() == true) {
@@ -92,42 +77,38 @@ class _AddSliderFormState extends State<AddSliderForm> {
                         .substring(0, i + 1)
                         .toLowerCase());
                   }
-                  if (widget.category == null) {
-                    final category = Category(
+                  if (widget.type == null) {
+                    final itemType = ItemType(
                       id: Uuid().v1(),
                       name: nameTextController.text,
-                      image: imageTextController.text.removeAllWhitespace,
+                      dateTime: DateTime.now().toIso8601String(),
                       order: 0,
-                      dateTime: DateTime.now(),
                       nameList: subName,
                     );
-                    upload<Category>(
-                        categoryDocument(category.id),
-                        category,
-                        "Slider uploading is successful.",
-                        "Slider uploading is failed.", () {
+                    upload<ItemType>(
+                        homeTypeDocument(itemType.id),
+                        itemType,
+                        "Type uploading is successful.",
+                        "Type uploading is failed.", () {
                       setState(() {
                         nameTextController.clear();
-                        imageTextController.clear();
                       });
                     });
 
                     debugPrint("******Uploading...Slider");
-                  } else if (nameTextController.text != widget.category!.name ||
-                      imageTextController.text != widget.category!.image) {
-                    final category = Category(
-                      id: widget.category!.id,
+                  } else if (nameTextController.text != widget.type!.name) {
+                    final itemType = ItemType(
+                      id: widget.type!.id,
                       name: nameTextController.text,
-                      image: imageTextController.text.removeAllWhitespace,
-                      order: widget.category!.order ?? 0,
-                      dateTime: widget.category!.dateTime,
+                      dateTime: widget.type!.dateTime,
+                      order: widget.type!.order,
                       nameList: subName,
                     );
-                    edit<Category>(
-                        categoryDocument(category.id),
-                        category,
-                        "Slider updating is successful.",
-                        "Slider updating is failed.",
+                    edit<ItemType>(
+                        homeTypeDocument(itemType.id),
+                        itemType,
+                        "Type updating is successful.",
+                        "Type updating is failed.",
                         () {});
 
                     debugPrint("******Uploading...Slider");
@@ -137,7 +118,7 @@ class _AddSliderFormState extends State<AddSliderForm> {
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: Text(
-                  widget.category == null ? "Save" : "Update",
+                  widget.type == null ? "Save" : "Update",
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

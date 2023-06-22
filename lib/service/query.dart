@@ -27,7 +27,7 @@ Query<Music> affirmationsCategoryMusicsQuery(String categoryID) =>
         .orderBy("dateTime");
 
 Query<VlogVideo> vlogVideoQuery =
-    vlogVideoCollection().orderBy("order", descending: true);
+    vlogVideoCollection().orderBy("dateTime", descending: true);
 Query<Category> therapyCategoryQuery =
     therapyCategoryCollection().orderBy("order");
 /* Query<TherapyVideo> therapyVideoQuery =
@@ -36,3 +36,5 @@ Query<TherapyVideo> therapyVideosQuery(String categoryID) =>
     therapyVideoCollection()
         .where("parentID", isEqualTo: categoryID)
         .orderBy('order');
+Query<TherapyVideo> allTherapyVideosQuery() =>
+    therapyVideoCollection().orderBy('order');

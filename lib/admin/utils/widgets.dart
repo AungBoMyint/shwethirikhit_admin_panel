@@ -54,3 +54,35 @@ dropDownBorder() => const OutlineInputBorder(
         borderSide: BorderSide(
       color: Colors.black,
     ));
+
+// ignore: must_be_immutable
+class FirebaseSnapHelper<T> extends StatelessWidget {
+  FirebaseSnapHelper({
+    super.key,
+    required this.future,
+    required this.onSuccess,
+  });
+
+  Future<T> future;
+  Function(T) onSuccess;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<T>(
+        future: future,
+        builder: (context, AsyncSnapshot<T> snap) {
+          if (snap.hasError) {
+            debugPrint("Something was wrong");
+            return ErrorWidget("Something was wrong!");
+          }
+          if (snap.hasData) {
+            return onSuccess(snap.data!);
+          }
+          return SizedBox(
+            height: 50,
+            width: 50,
+            child: CircularProgressIndicator(),
+          );
+        });
+  }
+}

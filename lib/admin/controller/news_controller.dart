@@ -1,14 +1,8 @@
-import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:pizza/admin/utils/show_loading.dart';
-import 'package:pizza/service/database.dart';
-
 import '../../models/object_models/category.dart';
 import '../../models/object_models/expert.dart';
 import '../../models/object_models/type.dart';
@@ -121,30 +115,6 @@ class NewsController extends GetxController {
         items == null ? [] : items.map((e) => e.data().id!).toList();
   }
 
-  void deleteItems<T>(List<String> idList, CollectionReference<T> reference) {
-    if (idList.isNotEmpty) {
-      deleteItemsWithBatch(idList, reference);
-    }
-  }
-
-  Future<void> deleteItemsWithBatch<T>(
-      List<String> idList, CollectionReference<T> reference) async {
-    final batch = FirebaseFirestore.instance.batch();
-
-    try {
-      showLoading(Get.context!);
-      Future.delayed(Duration.zero);
-      for (var id in idList) {
-        batch.delete(reference.doc(id));
-      }
-      await batch.commit();
-      hideLoading(Get.context!);
-    } catch (error) {
-      hideLoading(Get.context!);
-      log("Item Document Delete Error: $error");
-    }
-  }
-
   @override
   void onInit() {
     sliderScrollController.addListener(() {
@@ -172,71 +142,5 @@ class NewsController extends GetxController {
       }
     });
     super.onInit();
-  }
-
-  final Database database = Database();
-  Future<void> upload<T>(
-    DocumentReference<T> reference,
-    T object,
-    String success,
-    String error,
-    void Function() successCallBack,
-  ) async {
-    showLoading(Get.context!);
-    try {
-      await reference.set(object);
-      hideLoading(Get.context!);
-      successSnap(success);
-      if (!Get.isSnackbarOpen) {
-        successSnap(success);
-      }
-      successCallBack();
-    } catch (e) {
-      hideLoading(Get.context!);
-      if (!Get.isSnackbarOpen) {
-        errorSnap(error);
-      }
-    }
-  }
-
-  Future<void> edit<T>(
-    DocumentReference<T> reference,
-    T object,
-    String success,
-    String error,
-    void Function() successCallBack,
-  ) async {
-    showLoading(Get.context!);
-    try {
-      await reference.set(object);
-      hideLoading(Get.context!);
-      successSnap(success);
-      if (!Get.isSnackbarOpen) {
-        successSnap(success);
-      }
-      successCallBack();
-    } catch (e) {
-      hideLoading(Get.context!);
-      if (!Get.isSnackbarOpen) {
-        errorSnap(error);
-      }
-    }
-  }
-
-  Future<void> delete<T>(
-      DocumentReference<T> reference, String success, String error) async {
-    showLoading(Get.context!);
-    try {
-      await reference.delete();
-      hideLoading(Get.context!);
-      if (!Get.isSnackbarOpen) {
-        successSnap(success);
-      }
-    } catch (e) {
-      hideLoading(Get.context!);
-      if (!Get.isSnackbarOpen) {
-        errorSnap(error);
-      }
-    }
   }
 }

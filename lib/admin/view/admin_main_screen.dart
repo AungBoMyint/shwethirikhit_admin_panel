@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import 'package:pizza/admin/view/news/item_add_page.dart';
 import 'package:pizza/admin/view/news/item_page.dart';
 import 'package:pizza/admin/view/news/type_page.dart';
+import 'package:pizza/admin/view/therapy/categories_page.dart';
+import 'package:pizza/admin/view/therapy/therapy_videos_page.dart';
+import 'package:pizza/admin/view/vlog/vlog_page.dart';
 import 'dart:developer';
 import '../../constant/icon.dart';
 import '../../models/rbpoint.dart';
@@ -191,14 +194,14 @@ class DesktopXLSizeLayout extends StatelessWidget {
                           newsType: (_) => TypePage(),
                           newsItems: (_) => ItemPage(),
                           newsItemsAdd: (_) => ItemAddPage(),
-                          vlog: (_) => Container(),
+                          vlog: (_) => VlogPage(),
                           vlogAdd: (_) => Container(),
                           customers: (_) => Container(),
                           addCustomer: (_) => Container(),
                           learning: (_) => Container(),
                           therapy: (_) => Container(),
-                          therapyCategory: (_) => Container(),
-                          therapyItems: (_) => Container(),
+                          therapyCategory: (_) => TherapyCategoriesPage(),
+                          therapyItems: (_) => TherapyVideosPage(),
                           therapyItemsAdd: (_) => Container(),
                           affirmations: (_) => Container(),
                           affirmationsCategory: (_) => Container(),

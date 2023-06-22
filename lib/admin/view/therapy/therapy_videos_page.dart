@@ -1,41 +1,32 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:data_table_2/data_table_2.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:pizza/models/object_models/category.dart';
-import 'package:pizza/models/object_models/type.dart';
-import 'package:pizza/service/query.dart';
+import 'package:pizza/admin/controller/therapy_controller.dart';
+import 'package:pizza/admin/controller/vlog_controller.dart';
+import 'package:pizza/admin/widgets/vlog/vlog_add_form.dart';
+import 'package:pizza/models/object_models/therapy_video.dart';
+import 'package:pizza/models/object_models/vlog_video.dart';
 import 'package:pizza/service/reference.dart';
-
-import '../../../models/object_models/expert.dart';
 import '../../../models/rbpoint.dart';
-import '../../controller/admin_login_controller.dart';
 import '../../controller/admin_ui_controller.dart';
-import '../../controller/news_controller.dart';
 import '../../utils/func.dart';
 import '../../utils/space.dart';
 import '../../utils/widgets.dart';
-import '../../widgets/news/add_type_form.dart';
+import '../../widgets/therapy/add_therapyvideo_form.dart';
 
-class TypePage extends StatelessWidget {
-  const TypePage({super.key});
+class TherapyVideosPage extends StatelessWidget {
+  const TherapyVideosPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final AdminUiController controller = Get.find();
-    final NewsController newsController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
-    dropDownBorder() => const OutlineInputBorder(
-            borderSide: BorderSide(
-          color: Colors.black,
-        ));
+    final size = MediaQuery.of(context).size;
+    final TherapyController therapyController = Get.find();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,8 +55,8 @@ class TypePage extends StatelessWidget {
                     ),
                     verticalSpace(),
                     TextFormField(
-                      onChanged: (v) => newsController.debouncer.run(() {
-                        newsController.startTypeSearch(v);
+                      onChanged: (v) => therapyController.debouncer.run(() {
+                        therapyController.startTherapyVideosSearch(v);
                       }),
                       decoration: InputDecoration(
                         border: dropDownBorder(),
@@ -133,12 +124,13 @@ class TypePage extends StatelessWidget {
 
                         Expanded(child: Container()),
                         CreateButton(
-                          title: "Create Type",
+                          title: "Create Therapy Video",
                           onPressed: () {
+                            //TODO:Vlog Create Form
                             Get.dialog(
                               Center(
                                 child: SizedBox(
-                                  height: size.height * 0.3,
+                                  height: size.height * 0.7,
                                   width: size.width * 0.5,
                                   child: Material(
                                     borderRadius:
@@ -150,10 +142,9 @@ class TypePage extends StatelessWidget {
                                         top: 20,
                                         bottom: 10,
                                       ),
-                                      child: AddTypeForm(
-                                        width: size.width,
-                                        newsController: newsController,
+                                      child: AddTherapyVideoForm(
                                         dropDownBorder: dropDownBorder(),
+                                        therapyController: therapyController,
                                       ),
                                     ),
                                   ),
@@ -170,8 +161,8 @@ class TypePage extends StatelessWidget {
                 //Table
                 const Divider(),
                 Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<ItemType>(
-                      query: newsController.typeQuery.value!,
+                  return FirestoreQueryBuilder<TherapyVideo>(
+                      query: therapyController.therapyVideoQuery.value!,
                       pageSize: 15,
                       builder: (context, snapshot, _) {
                         if (snapshot.isFetching) {
@@ -190,17 +181,18 @@ class TypePage extends StatelessWidget {
                         }
 
                         if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setTypeSnapshot(snapshot);
+                          therapyController.settherapyVideosSnapshot(snapshot);
                         }
 
                         return Obx(() {
                           final selectedAll =
-                              newsController.typeSelectedAll.value;
-                          final selectedRow = newsController.typeSelectedRow;
+                              therapyController.therapyVideosSelectedAll.value;
+                          final selectedRow =
+                              therapyController.therapyVideosSelectedRow;
                           return DataTable2(
                             showCheckboxColumn: true,
                             scrollController:
-                                newsController.typeScrollController,
+                                therapyController.therapyVideosScrollController,
                             columnSpacing: 20,
                             horizontalMargin: 20,
                             minWidth: 600,
@@ -212,10 +204,12 @@ class TypePage extends StatelessWidget {
                                   activeColor: Theme.of(context).primaryColor,
                                   onChanged: (_) {
                                     if (!selectedAll) {
-                                      newsController
-                                          .setTypeSelectedAll(snapshot.docs);
+                                      therapyController
+                                          .settherapyVideosSelectedAll(
+                                              snapshot.docs);
                                     } else {
-                                      newsController.setTypeSelectedAll(null);
+                                      therapyController
+                                          .settherapyVideosSelectedAll(null);
                                     }
                                   },
                                   side: BorderSide(
@@ -225,7 +219,6 @@ class TypePage extends StatelessWidget {
                                 ),
                                 fixedWidth: 80,
                               ),
-
                               DataColumn(
                                 label: Text(
                                   'Name',
@@ -235,16 +228,17 @@ class TypePage extends StatelessWidget {
                               //Out of stock
                               DataColumn2(
                                 label: Text(
-                                  'Total Items',
+                                  'Image',
                                   style: titleTextStyle,
                                 ),
                                 size: ColumnSize.L,
                               ),
-                              DataColumn(
+                              DataColumn2(
                                 label: Text(
-                                  'Order',
+                                  'Video',
                                   style: titleTextStyle,
                                 ),
+                                size: ColumnSize.L,
                               ),
                               DataColumn2(
                                 label: Text(
@@ -266,8 +260,8 @@ class TypePage extends StatelessWidget {
                                         activeColor:
                                             Theme.of(context).primaryColor,
                                         value: selectedRow.contains(item.id),
-                                        onChanged: (_) => newsController
-                                            .setTypeSelectedRow(item),
+                                        onChanged: (_) => therapyController
+                                            .settherapyVideosSelectedRow(item),
                                         side: const BorderSide(
                                           color: Colors.black,
                                           width: 1.5,
@@ -277,31 +271,20 @@ class TypePage extends StatelessWidget {
 
                                     DataCell(
                                       Text(
-                                        item.name,
+                                        item.title,
                                         style: bodyTextStyle,
                                       ),
                                     ),
                                     //Total Items
-                                    DataCell(FutureBuilder(
-                                        future: expertQuery(item.id).get(),
-                                        builder:
-                                            (context, AsyncSnapshot snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data.docs.length}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
+                                    DataCell(Image.network(
+                                      item.image,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.contain,
+                                    )),
                                     DataCell(
                                       Text(
-                                        "${item.order}",
+                                        "${item.videoURL}",
                                         style: bodyTextStyle,
                                       ),
                                     ),
@@ -312,10 +295,10 @@ class TypePage extends StatelessWidget {
                                       children: [
                                         IconButton(
                                           iconSize: 25,
-                                          onPressed: () => delete<ItemType>(
-                                              homeTypeDocument(item.id),
-                                              "Type deleting is successful.",
-                                              "Type deleting is failed."),
+                                          onPressed: () => delete<TherapyVideo>(
+                                              therapyVideoDocument(item.id),
+                                              "Therapy Video deleting is successful.",
+                                              "Therapy Video deleting is failed."),
                                           icon: Icon(
                                             FontAwesomeIcons.trash,
                                             color: Colors.grey.shade600,
@@ -324,10 +307,21 @@ class TypePage extends StatelessWidget {
                                         IconButton(
                                           iconSize: 25,
                                           onPressed: () {
+                                            //TODO:Vlog View
+                                          },
+                                          icon: Icon(
+                                            FontAwesomeIcons.eye,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          iconSize: 25,
+                                          onPressed: () {
+                                            //TODO:Vlog Edit Form
                                             Get.dialog(
                                               Center(
                                                 child: SizedBox(
-                                                  height: size.height * 0.3,
+                                                  height: size.height * 0.7,
                                                   width: size.width * 0.5,
                                                   child: Material(
                                                     borderRadius:
@@ -342,13 +336,13 @@ class TypePage extends StatelessWidget {
                                                         top: 20,
                                                         bottom: 10,
                                                       ),
-                                                      child: AddTypeForm(
-                                                        width: size.width,
-                                                        newsController:
-                                                            newsController,
+                                                      child:
+                                                          AddTherapyVideoForm(
                                                         dropDownBorder:
                                                             dropDownBorder(),
-                                                        type: item,
+                                                        therapyController:
+                                                            therapyController,
+                                                        therapyVideo: item,
                                                       ),
                                                     ),
                                                   ),
@@ -383,8 +377,8 @@ class TypePage extends StatelessWidget {
 }
 
 void showPopupMenu(BuildContext context, Offset position) async {
-  final NewsController prController = Get.find();
   final textTheme = Theme.of(context).textTheme;
+  final TherapyController therapyController = Get.find();
   final RenderBox overlay =
       Overlay.of(context).context.findRenderObject() as RenderBox;
   final RenderBox popupButton = context.findRenderObject() as RenderBox;
@@ -406,9 +400,9 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<ItemType>(
-          prController.typeSelectedRow,
-          homeTypeCollection(),
+        onTap: () => deleteItems<TherapyVideo>(
+          therapyController.therapyVideosSelectedRow,
+          therapyVideoCollection(),
         ),
         child: Text(
           "Delete",

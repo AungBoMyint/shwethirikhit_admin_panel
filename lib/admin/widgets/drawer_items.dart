@@ -124,7 +124,8 @@ class DrawerItems extends GetView<AdminLoginController> {
                   final pageType = adminUiController.pageType.value!
                       .getOrElse(() => PageType.initial());
                   return DrawerItem(
-                    onTap: null,
+                    onTap: () =>
+                        adminUiController.changePageType(PageType.vlog()),
                     textTheme: textTheme,
                     isSelected: pageType == PageType.vlog() ||
                         pageType == PageType.vlogAdd(),

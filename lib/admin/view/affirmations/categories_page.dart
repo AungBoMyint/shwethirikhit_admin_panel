@@ -6,27 +6,27 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:pizza/admin/utils/widgets.dart';
 import 'package:pizza/models/object_models/category.dart';
-import 'package:pizza/models/object_models/type.dart';
-import 'package:pizza/service/query.dart';
 import 'package:pizza/service/reference.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../../models/object_models/expert.dart';
 import '../../../models/rbpoint.dart';
 import '../../controller/admin_login_controller.dart';
 import '../../controller/admin_ui_controller.dart';
 import '../../controller/news_controller.dart';
 import '../../utils/func.dart';
 import '../../utils/space.dart';
-import '../../utils/widgets.dart';
-import '../../widgets/news/add_type_form.dart';
+import '../../widgets/news/add_slider_form.dart';
 
-class TypePage extends StatelessWidget {
-  const TypePage({super.key});
+class AffirmationsCategoriesPage extends StatelessWidget {
+  const AffirmationsCategoriesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final width = size.width;
     final AdminUiController controller = Get.find();
     final NewsController newsController = Get.find();
     final textTheme = Theme.of(context).textTheme;
@@ -36,51 +36,56 @@ class TypePage extends StatelessWidget {
             borderSide: BorderSide(
           color: Colors.black,
         ));
+    const addImageIcon =
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT7QsDfFzqYkAHGCjGUZI_Q6g27cdw7tF9DO3FveGM&s";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Card(
-            child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            children: [
-              //Search
-              Expanded(
-                flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Search",
-                      style: textTheme.displayLarge?.copyWith(
-                        fontSize: controller.rbPoint.value!
-                            .getOrElse(() => RBPoint.xl())
-                            .map(
-                                xl: (_) => 16,
-                                desktop: (_) => 12,
-                                tablet: (_) => 10,
-                                mobile: (_) => 8),
+        SizedBox(
+          child: Card(
+              child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                //Search
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Search",
+                        style: textTheme.displayLarge?.copyWith(
+                          fontSize: controller.rbPoint.value!
+                              .getOrElse(() => RBPoint.xl())
+                              .map(
+                                  xl: (_) => 16,
+                                  desktop: (_) => 12,
+                                  tablet: (_) => 10,
+                                  mobile: (_) => 8),
+                        ),
                       ),
-                    ),
-                    verticalSpace(),
-                    TextFormField(
-                      onChanged: (v) => newsController.debouncer.run(() {
-                        newsController.startTypeSearch(v);
-                      }),
-                      decoration: InputDecoration(
-                        border: dropDownBorder(),
-                        disabledBorder: dropDownBorder(),
-                        focusedBorder: dropDownBorder(),
-                        enabledBorder: dropDownBorder(),
-                        suffixIcon: Icon(Icons.search, color: Colors.black),
+                      verticalSpace(),
+                      TextFormField(
+                        onChanged: (v) => newsController.debouncer.run(() {
+                          newsController.startSliderSearch(v);
+                        }),
+                        decoration: InputDecoration(
+                          border: dropDownBorder(),
+                          disabledBorder: dropDownBorder(),
+                          focusedBorder: dropDownBorder(),
+                          enabledBorder: dropDownBorder(),
+                          suffixIcon: Icon(Icons.search, color: Colors.black),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        )),
+                //Create Slider
+              ],
+            ),
+          )),
+        ),
 
         //Table
         Expanded(
@@ -133,12 +138,12 @@ class TypePage extends StatelessWidget {
 
                         Expanded(child: Container()),
                         CreateButton(
-                          title: "Create Type",
+                          title: "Create Slider",
                           onPressed: () {
                             Get.dialog(
                               Center(
                                 child: SizedBox(
-                                  height: size.height * 0.3,
+                                  height: size.height * 0.38,
                                   width: size.width * 0.5,
                                   child: Material(
                                     borderRadius:
@@ -150,8 +155,8 @@ class TypePage extends StatelessWidget {
                                         top: 20,
                                         bottom: 10,
                                       ),
-                                      child: AddTypeForm(
-                                        width: size.width,
+                                      child: AddSliderForm(
+                                        width: width,
                                         newsController: newsController,
                                         dropDownBorder: dropDownBorder(),
                                       ),
@@ -170,8 +175,8 @@ class TypePage extends StatelessWidget {
                 //Table
                 const Divider(),
                 Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<ItemType>(
-                      query: newsController.typeQuery.value!,
+                  return FirestoreQueryBuilder<Category>(
+                      query: newsController.sliderQuery.value!,
                       pageSize: 15,
                       builder: (context, snapshot, _) {
                         if (snapshot.isFetching) {
@@ -184,23 +189,23 @@ class TypePage extends StatelessWidget {
                           );
                         }
                         if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
+                          debugPrint("****Error: ${snapshot.error}");
                           return Text(
                               'Something went wrong! ${snapshot.error}');
                         }
 
                         if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setTypeSnapshot(snapshot);
+                          newsController.setSliderSnapshot(snapshot);
                         }
 
                         return Obx(() {
                           final selectedAll =
-                              newsController.typeSelectedAll.value;
-                          final selectedRow = newsController.typeSelectedRow;
+                              newsController.sliderSelectedAll.value;
+                          final selectedRow = newsController.sliderSelectedRow;
                           return DataTable2(
                             showCheckboxColumn: true,
                             scrollController:
-                                newsController.typeScrollController,
+                                newsController.sliderScrollController,
                             columnSpacing: 20,
                             horizontalMargin: 20,
                             minWidth: 600,
@@ -213,9 +218,9 @@ class TypePage extends StatelessWidget {
                                   onChanged: (_) {
                                     if (!selectedAll) {
                                       newsController
-                                          .setTypeSelectedAll(snapshot.docs);
+                                          .setSliderSelectedAll(snapshot.docs);
                                     } else {
-                                      newsController.setTypeSelectedAll(null);
+                                      newsController.setSliderSelectedAll(null);
                                     }
                                   },
                                   side: BorderSide(
@@ -225,7 +230,6 @@ class TypePage extends StatelessWidget {
                                 ),
                                 fixedWidth: 80,
                               ),
-
                               DataColumn(
                                 label: Text(
                                   'Name',
@@ -235,7 +239,7 @@ class TypePage extends StatelessWidget {
                               //Out of stock
                               DataColumn2(
                                 label: Text(
-                                  'Total Items',
+                                  'Image',
                                   style: titleTextStyle,
                                 ),
                                 size: ColumnSize.L,
@@ -267,7 +271,7 @@ class TypePage extends StatelessWidget {
                                             Theme.of(context).primaryColor,
                                         value: selectedRow.contains(item.id),
                                         onChanged: (_) => newsController
-                                            .setTypeSelectedRow(item),
+                                            .setSliderSelectedRow(item),
                                         side: const BorderSide(
                                           color: Colors.black,
                                           width: 1.5,
@@ -281,24 +285,13 @@ class TypePage extends StatelessWidget {
                                         style: bodyTextStyle,
                                       ),
                                     ),
-                                    //Total Items
-                                    DataCell(FutureBuilder(
-                                        future: expertQuery(item.id).get(),
-                                        builder:
-                                            (context, AsyncSnapshot snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data.docs.length}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
+                                    //Out of Stock
+                                    DataCell(Image.network(
+                                      item.image,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.contain,
+                                    )),
                                     DataCell(
                                       Text(
                                         "${item.order}",
@@ -312,10 +305,10 @@ class TypePage extends StatelessWidget {
                                       children: [
                                         IconButton(
                                           iconSize: 25,
-                                          onPressed: () => delete<ItemType>(
-                                              homeTypeDocument(item.id),
-                                              "Type deleting is successful.",
-                                              "Type deleting is failed."),
+                                          onPressed: () => delete(
+                                              categoryDocument(item.id),
+                                              "Slider deleting is successful.",
+                                              "Slider deleting is failed."),
                                           icon: Icon(
                                             FontAwesomeIcons.trash,
                                             color: Colors.grey.shade600,
@@ -327,7 +320,7 @@ class TypePage extends StatelessWidget {
                                             Get.dialog(
                                               Center(
                                                 child: SizedBox(
-                                                  height: size.height * 0.3,
+                                                  height: size.height * 0.38,
                                                   width: size.width * 0.5,
                                                   child: Material(
                                                     borderRadius:
@@ -342,13 +335,13 @@ class TypePage extends StatelessWidget {
                                                         top: 20,
                                                         bottom: 10,
                                                       ),
-                                                      child: AddTypeForm(
-                                                        width: size.width,
+                                                      child: AddSliderForm(
+                                                        width: width,
                                                         newsController:
                                                             newsController,
                                                         dropDownBorder:
                                                             dropDownBorder(),
-                                                        type: item,
+                                                        category: item,
                                                       ),
                                                     ),
                                                   ),
@@ -383,7 +376,7 @@ class TypePage extends StatelessWidget {
 }
 
 void showPopupMenu(BuildContext context, Offset position) async {
-  final NewsController prController = Get.find();
+  final NewsController newsController = Get.find();
   final textTheme = Theme.of(context).textTheme;
   final RenderBox overlay =
       Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -406,9 +399,9 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<ItemType>(
-          prController.typeSelectedRow,
-          homeTypeCollection(),
+        onTap: () => deleteItems<Category>(
+          newsController.sliderSelectedRow,
+          categoryCollection(),
         ),
         child: Text(
           "Delete",

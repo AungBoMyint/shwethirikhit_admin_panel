@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:pizza/admin/utils/show_loading.dart';
 import 'package:pizza/constant/data.dart';
 import 'dart:math';
+import 'dart:developer' as d;
 import '../../models/rbpoint.dart';
 
 RBPoint getRBPoint(double width) {
@@ -112,5 +115,104 @@ String? stringValidator(String key, String? value) {
     return "$key is required";
   } else {
     return null;
+  }
+}
+
+String? integerValidator(String key, String? value) {
+  if (value == null || value.isEmpty) {
+    return "$key is required";
+  } else if (int.tryParse(value) == null) {
+    return "$key must be integer.(example=> '0')";
+  } else {
+    return null;
+  }
+}
+
+Future<void> upload<T>(
+  DocumentReference<T> reference,
+  T object,
+  String success,
+  String error,
+  void Function() successCallBack,
+) async {
+  showLoading(Get.context!);
+  try {
+    await reference.set(object);
+    hideLoading(Get.context!);
+    successSnap(success);
+    if (!Get.isSnackbarOpen) {
+      successSnap(success);
+    }
+    successCallBack();
+  } catch (e) {
+    hideLoading(Get.context!);
+    if (!Get.isSnackbarOpen) {
+      errorSnap(error);
+    }
+  }
+}
+
+Future<void> edit<T>(
+  DocumentReference<T> reference,
+  T object,
+  String success,
+  String error,
+  void Function() successCallBack,
+) async {
+  showLoading(Get.context!);
+  try {
+    await reference.set(object);
+    hideLoading(Get.context!);
+    successSnap(success);
+    if (!Get.isSnackbarOpen) {
+      successSnap(success);
+    }
+    successCallBack();
+  } catch (e) {
+    hideLoading(Get.context!);
+    if (!Get.isSnackbarOpen) {
+      errorSnap(error);
+    }
+  }
+}
+
+Future<void> delete<T>(
+    DocumentReference<T> reference, String success, String error) async {
+  showLoading(Get.context!);
+  try {
+    await reference.delete();
+    hideLoading(Get.context!);
+    if (!Get.isSnackbarOpen) {
+      successSnap(success);
+    }
+  } catch (e) {
+    hideLoading(Get.context!);
+    if (!Get.isSnackbarOpen) {
+      errorSnap(error);
+    }
+  }
+}
+
+void deleteItems<T>(List<String> idList, CollectionReference<T> reference) {
+  if (idList.isNotEmpty) {
+    deleteItemsWithBatch(idList, reference);
+  }
+}
+
+Future<void> deleteItemsWithBatch<T>(
+    List<String> idList, CollectionReference<T> reference) async {
+  final batch = FirebaseFirestore.instance.batch();
+
+  try {
+    showLoading(Get.context!);
+    Future.delayed(Duration.zero);
+    for (var id in idList) {
+      batch.delete(reference.doc(id));
+    }
+    await batch.commit();
+    hideLoading(Get.context!);
+  } catch (error) {
+    hideLoading(Get.context!);
+    d.log("Item Document Delete Error: $error");
   }
 }

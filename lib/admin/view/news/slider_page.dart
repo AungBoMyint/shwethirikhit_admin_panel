@@ -16,6 +16,7 @@ import '../../../models/rbpoint.dart';
 import '../../controller/admin_login_controller.dart';
 import '../../controller/admin_ui_controller.dart';
 import '../../controller/news_controller.dart';
+import '../../utils/func.dart';
 import '../../utils/space.dart';
 import '../../widgets/news/add_slider_form.dart';
 import 'item_page.dart';
@@ -305,7 +306,7 @@ class SliderPage extends StatelessWidget {
                                       children: [
                                         IconButton(
                                           iconSize: 25,
-                                          onPressed: () => newsController.delete(
+                                          onPressed: () => delete(
                                               categoryDocument(item.id),
                                               "Slider deleting is successful.",
                                               "Slider deleting is failed."),
@@ -399,7 +400,7 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => newsController.deleteItems<Category>(
+        onTap: () => deleteItems<Category>(
           newsController.sliderSelectedRow,
           categoryCollection(),
         ),
