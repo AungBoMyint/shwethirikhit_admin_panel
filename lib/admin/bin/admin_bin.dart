@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:pizza/admin/controller/affirmations_controller.dart';
+import 'package:pizza/admin/controller/overview_related_controller.dart';
 import 'package:pizza/admin/controller/therapy_controller.dart';
 import 'package:pizza/admin/controller/vlog_controller.dart';
 
@@ -16,5 +17,6 @@ class AdminBinding extends Bindings {
     Get.put(VlogController());
     Get.put(TherapyController());
     Get.put(AffirmationsController());
+    Get.put(OverviewRelatedController());
   }
 }

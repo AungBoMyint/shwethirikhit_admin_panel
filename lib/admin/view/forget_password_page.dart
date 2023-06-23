@@ -53,14 +53,13 @@ class ForgetPasswordPage extends GetView<PasswordResetController> {
                 //Logo And Text
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: SvgPicture.asset(
-                    AdminIcon.nuclear,
+                  leading: Image.asset(
+                    AdminIcon.logo,
                     width: 30,
                     height: 30,
-                    color: Theme.of(context).iconTheme.color,
                   ),
                   title: Text(
-                    "DehatFresh",
+                    "Shwe Thiri Khit",
                     style: textTheme.displayLarge?.copyWith(
                       fontSize: 25,
                     ),

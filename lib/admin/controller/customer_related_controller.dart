@@ -1,19 +1,14 @@
-import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
-import 'dart:math' hide log;
 /* import 'dart:html' as html;
  */
-import 'package:get/get_navigation/src/extension_navigation.dart' hide back;
+import 'package:dropdown_textfield/dropdown_textfield.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:csv/csv.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pizza/models/customer_filter_type.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../constant/data.dart';
@@ -22,178 +17,47 @@ import '../../models/auth_user.dart';
 import '../../models/customer_role.dart';
 import '../../models/page_type.dart';
 import '../../service/database.dart';
+import '../utils/debouncer.dart';
 import '../utils/func.dart';
 import '../utils/show_loading.dart';
 import 'admin_login_controller.dart';
 import 'admin_ui_controller.dart';
 
 class CustomerRelatedController extends GetxController {
+  final box = Hive.box(loginBox);
   final AdminLoginController alController = Get.find();
   final AdminUiController adminUiController = Get.find();
-  Rxn<Query<AuthUser>> userQuery =
-      Rxn<Query<AuthUser>>(userCollectionReference().orderBy("name"));
+  late Rxn<Query<AuthUser>> userQuery;
+  final debouncer = Debouncer(milliseconds: 800);
   final ScrollController scrollController =
       ScrollController(initialScrollOffset: 0);
   TextEditingController searchController = TextEditingController();
   Rxn<FirestoreQueryBuilderSnapshot<AuthUser>> snapshot =
       Rxn<FirestoreQueryBuilderSnapshot<AuthUser>>();
   Rxn<AuthUser> editUser = Rxn<AuthUser>(null);
+  SingleValueDropDownController ageController = SingleValueDropDownController();
+  RxList<String> multiSelectedItems = <String>[].obs;
   void startSearch() {
     if (searchController.text.isNotEmpty) {
-      userQuery.value = userCollectionReference().orderBy('name').startAt(
-          [searchController.text]).endAt([searchController.text + '\uf8ff']);
+      userQuery.value = userCollectionReference()
+          .where("id", isNotEqualTo: alController.currentUser.value!.id)
+          .where("nameList",
+              arrayContains: searchController.text.toLowerCase());
     } else {
-      userQuery.value = userCollectionReference().orderBy("name");
+      userQuery.value = allUsersExceptCurrentQuery();
     }
   }
 
   void setSnapshot(FirestoreQueryBuilderSnapshot<AuthUser> v) =>
       snapshot.value = v;
-  void pickCSVFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-    );
-    if (!(result == null)) {
-      try {
-        /*   //This is for web
-        final fileBytes = result.files.first.bytes!;
 
-        final contents = utf8.decode(fileBytes); */
-        //This is for another platform
-        final contents = await File(result.files.single.path!).readAsString();
-        final list = contents.split("\n"); //split row
-        final dataList = list.sublist(1); //becuase o is title row
-        var csvData = dataList;
-        csvData.remove(csvData.last);
-        var users = <AuthUser>[];
-
-        for (final row in csvData) {
-          // Split the modified string by commas
-          List<String> parts = row.split(',');
-
-          String id = parts[0];
-          String name = parts[1];
-          String phone = parts[2];
-          String location = parts[3];
-          double lat = (int.tryParse(parts[4]) ?? 0) + .0;
-          double long = (int.tryParse(parts[5]) ?? 0) + .0;
-          String avatar = parts[6];
-          int status = int.tryParse(parts[7]) ?? 0;
-          List<bool> memicActive = [true, false];
-
-          var user = AuthUser(
-            id: id,
-            name: name,
-            phone: phone,
-            location: location,
-            lat: lat,
-            long: long,
-            avatar: avatar,
-            status: status,
-            isActive: memicActive[Random().nextInt(2)],
-          );
-          users.add(user);
-        }
-        users.removeRange(101, users.length);
-        debugPrint("*****User List: ${users.length}");
-        if (users.isNotEmpty) {
-          final batch = FirebaseFirestore.instance.batch();
-
-          try {
-            showLoading(Get.context!);
-            for (var user in users) {
-              batch.set(
-                userDocumentReference(user.id),
-                user,
-              );
-              /*  await itemDocumentReference(item.id).set(item); */
-            }
-            await batch.commit();
-            hideLoading(Get.context!);
-          } catch (error) {
-            hideLoading(Get.context!);
-            log("User Document Write Error: $error");
-          }
-        }
-      } on FormatException catch (e) {
-        if (Get.isDialogOpen!) {
-          hideLoading(Get.context!);
-        }
-        log("CSV File Pick Error: ${e.message}\n ${e.source}");
-      }
-    }
-  }
-
-  //Example, to delete
-  Future<void> makeExportingCSV() async {
-    showLoading(Get.context!);
-    final data = await userCollectionReference().get();
-    final users = data.docs.map((e) => e.data()).toList();
-    hideLoading(Get.context!);
-    if (users.isNotEmpty) {
-      exportCSV(users);
-      log("Exporting...............");
-    } else {
-      log("Data is Empty...");
-    }
-  }
-
-  void exportCSV(List<AuthUser> users) {
-    List<List<dynamic>> rows = [];
-
-    // Add header row
-    rows.add(
-        ['id', 'name', 'phone', 'location', 'lat', 'long', 'avatar', 'status']);
-
-    // Add data row
-    for (var user in users) {
-      List<dynamic> dataRow = [
-        user.id,
-        user.name,
-        user.phone,
-        user.location,
-        user.lat,
-        user.long,
-        user.avatar,
-        user.status,
-      ];
-      rows.add(dataRow);
-    }
-    /* if (rows.length > 1) {
-      downloadCsv(rows);
-    } */
-  }
-
-  /*  void downloadCsv(List<List<dynamic>> csvData) {
-    String csvString = const ListToCsvConverter().convert(csvData);
-
-    // Create blob object from CSV data
-    final blob = html.Blob([csvString], 'text/csv');
-
-    // Create URL for download link
-    final url = html.Url.createObjectUrlFromBlob(blob);
-
-    // Create download link element
-    final link = html.AnchorElement(href: url)
-      ..setAttribute('download', 'data.csv')
-      ..text = 'Download CSV';
-
-    // Append link element to DOM and click it to initiate download
-    html.document.body!.append(link);
-    link.click();
-
-    // Cleanup URL object
-    html.Url.revokeObjectUrl(url);
-  }
- */
-
-  Future<QuerySnapshot<AuthUser>> getTotalUsers() =>
-      userCollectionReference().get();
-  Future<QuerySnapshot<AuthUser>> getActiveUsers() =>
-      userCollectionReference().where("isActive", isEqualTo: true).get();
+  allUsersExceptCurrentQuery() => userCollectionReference()
+      .where("id", isNotEqualTo: box.get(userIdKey))
+      .orderBy("id")
+      .orderBy("name");
   @override
   void onInit() {
+    userQuery = Rxn<Query<AuthUser>>(allUsersExceptCurrentQuery());
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -202,32 +66,7 @@ class CustomerRelatedController extends GetxController {
         }
       }
     });
-    ever(adminUiController.customerFilterType, changeUserOrder);
     super.onInit();
-  }
-
-  changeUserOrder(CustomerFilterType? cft) {
-    if (cft == CustomerFilterType.initial()) {
-      userQuery.value = userCollectionReference().orderBy("name");
-    } else if (cft == CustomerFilterType.customer()) {
-      userQuery.value = userCollectionReference()
-          .where("status", isEqualTo: 0)
-          .orderBy("name");
-    } else if (cft == CustomerFilterType.admin()) {
-      userQuery.value = userCollectionReference()
-          .where("status", isEqualTo: 1)
-          .orderBy("name");
-    } else if (cft == CustomerFilterType.active()) {
-      userQuery.value = userCollectionReference()
-          .where("isActive", isEqualTo: true)
-          .orderBy("name");
-    } else if (cft == CustomerFilterType.inactive()) {
-      userQuery.value = userCollectionReference()
-          .where("isActive", isEqualTo: false)
-          .orderBy("name");
-    } else {
-      userQuery.value = userCollectionReference().orderBy("name");
-    }
   }
 
   //---------------------For Adding Customer-----------------
@@ -262,6 +101,13 @@ class CustomerRelatedController extends GetxController {
               ? Role.admin
               : Role.nothing;
       pickedImage.value = user.avatar ?? '';
+      ageController = SingleValueDropDownController(
+        data: DropDownValueModel(
+          name: user.age ?? "",
+          value: user.age ?? "",
+        ),
+      );
+      multiSelectedItems.value = user.area ?? <String>[];
     }
   }
 
@@ -275,6 +121,8 @@ class CustomerRelatedController extends GetxController {
     locationController.clear();
     role.value = null;
     roleError.value = "";
+    ageController.clearDropDown();
+    multiSelectedItems.value = [];
   }
 
   void changeRole(Role r) {
@@ -334,6 +182,12 @@ class CustomerRelatedController extends GetxController {
       ).then((value) async {
         final url = await _database.uploadImage("users", pickedImage.value);
         final r = role.value == Role.customer ? 0 : 1;
+        List<String> subName = [];
+        var subList = userNameController.text.split('');
+        for (var i = 0; i < subList.length; i++) {
+          subName
+              .add(userNameController.text.substring(0, i + 1).toLowerCase());
+        }
         final authUser = AuthUser(
           id: Uuid().v1(),
           name: userNameController.text,
@@ -341,15 +195,17 @@ class CustomerRelatedController extends GetxController {
           email: emailController.text,
           password: passwordController.text,
           location: locationController.text,
+          age: ageController.dropDownValue?.value,
+          area: multiSelectedItems.map((element) => element).toList(),
           lat: 0,
           long: 0,
           status: r,
-          isActive: false,
+          nameList: subName,
         );
         await userDocumentReference(authUser.id).set(authUser);
         hideLoading(Get.context!);
         reset();
-        Get.snackbar("Success", "User Adding is successful");
+        successSnap("Success", message: "User Adding is successful");
       }).catchError((o) {
         hideLoading(Get.context!);
         log("Register error: $o");
@@ -366,6 +222,11 @@ class CustomerRelatedController extends GetxController {
     if ((form.currentState?.validate() == true) &&
         checkImage &&
         checkRoleError) {
+      List<String> subName = [];
+      var subList = userNameController.text.split('');
+      for (var i = 0; i < subList.length; i++) {
+        subName.add(userNameController.text.substring(0, i + 1).toLowerCase());
+      }
       log("Form is valid");
       showLoading(Get.context!);
       await Future.delayed(Duration.zero);
@@ -376,10 +237,12 @@ class CustomerRelatedController extends GetxController {
         email: emailController.text,
         password: passwordController.text,
         location: locationController.text,
+        age: ageController.dropDownValue?.value,
+        area: multiSelectedItems.map((element) => element).toList(),
         lat: 0,
         long: 0,
         status: role.value == Role.customer ? 0 : 1,
-        isActive: false,
+        nameList: subName,
       );
       //we need to first Login to get this user
       final userCredential =
@@ -408,7 +271,7 @@ class CustomerRelatedController extends GetxController {
 
       await userDocumentReference(updateUser.id).set(updateUser);
       hideLoading(Get.context!);
-      Get.snackbar("Success", "User Updating is successful");
+      successSnap("Success", message: "User Updating is successful");
     } else {
       log("Form is not valid");
     }
@@ -445,10 +308,9 @@ class CustomerRelatedController extends GetxController {
 
   Future<void> updateProfile() async {
     final checkImage = checkPickImage();
-    final checkRoleError = checkRole();
-    if ((form.currentState?.validate() == true) &&
-        checkImage &&
-        checkRoleError) {
+/*     final checkRoleError = checkRole();
+ */
+    if ((form.currentState?.validate() == true) && checkImage) {
       try {
         showLoading(Get.context!);
         final User user = FirebaseAuth.instance.currentUser!;
@@ -464,17 +326,13 @@ class CustomerRelatedController extends GetxController {
           name: userNameController.text,
           avatar: url,
           email: emailController.text,
-          location: locationController.text,
-          lat: 0,
-          long: 0,
           status: r,
-          isActive: false,
         );
         await userDocumentReference(authUser.id).update(authUser.toJson());
         alController.currentUser.value = authUser;
         hideLoading(Get.context!);
         reset();
-        Get.snackbar("Success", "Profile updating is successful");
+        successSnap("Success", message: "Profile updating is successful");
 
         /* adminUiController.setPageType(const PageType.overview()); */
       } on FirebaseAuthException catch (e) {

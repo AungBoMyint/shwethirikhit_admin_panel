@@ -124,7 +124,6 @@ class AdminLoginController extends GetxController {
         email: email,
         password: password,
         status: 1,
-        isActive: true,
       );
       await userCollectionReference()
           .doc(currentUser.value!.id)

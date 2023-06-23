@@ -23,8 +23,8 @@ class DrawerHeader extends GetView<AdminUiController> {
         const SizedBox(
           width: 25,
         ),
-        SvgPicture.asset(
-          AdminIcon.nuclear,
+        Image.asset(
+          AdminIcon.logo,
           width: controller.rbPoint.value!.getOrElse(() => RBPoint.xl()).map(
               xl: (_) => 30,
               desktop: (_) => 25,
@@ -35,7 +35,6 @@ class DrawerHeader extends GetView<AdminUiController> {
               desktop: (_) => 25,
               tablet: (_) => 23,
               mobile: (_) => 22),
-          color: Theme.of(context).iconTheme.color,
         ),
         SizedBox(
           width: controller.rbPoint.value!.getOrElse(() => RBPoint.xl()).map(

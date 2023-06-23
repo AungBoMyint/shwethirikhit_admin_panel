@@ -29,19 +29,19 @@ void showCustomDialog(
   );
 }
 
-successSnap(String title) {
+successSnap(String title, {String? message}) {
   Get.snackbar(
     title,
-    "",
+    message ?? "",
     backgroundColor: Colors.green,
     colorText: Colors.white,
   );
 }
 
-errorSnap(String title) {
+errorSnap(String title, {String? message}) {
   Get.snackbar(
     title,
-    "",
+    message ?? "",
     backgroundColor: Colors.red,
     colorText: Colors.white,
   );

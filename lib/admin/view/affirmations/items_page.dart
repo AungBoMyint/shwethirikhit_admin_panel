@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
@@ -245,14 +246,27 @@ class AffirmationsItemsPage extends StatelessWidget {
                                   style: titleTextStyle,
                                 ),
                               ),
-
+                              //Category
+                              DataColumn(
+                                label: Text(
+                                  'Category',
+                                  style: titleTextStyle,
+                                ),
+                              ),
+                              //Type
+                              DataColumn(
+                                label: Text(
+                                  'Type',
+                                  style: titleTextStyle,
+                                ),
+                              ),
                               DataColumn2(
                                 label: Text(
                                   'Actions',
                                   style: titleTextStyle,
                                   textAlign: TextAlign.center,
                                 ),
-                                fixedWidth: 160,
+                                fixedWidth: 135,
                               ),
                             ],
                             rows: List.generate(
@@ -292,6 +306,52 @@ class AffirmationsItemsPage extends StatelessWidget {
                                         style: bodyTextStyle,
                                       ),
                                     ),
+                                    //Category
+                                    DataCell(FutureBuilder<
+                                            DocumentSnapshot<Category>>(
+                                        future: affirmationsCategoryDocument(
+                                                item.categoryID)
+                                            .get(),
+                                        builder: (context,
+                                            AsyncSnapshot<
+                                                    DocumentSnapshot<Category>>
+                                                snapshot) {
+                                          if (snapshot.hasData) {
+                                            return Text(
+                                              "${snapshot.data?.data()?.name}",
+                                              style: bodyTextStyle,
+                                              maxLines: 3,
+                                            );
+                                          }
+                                          return Text(
+                                            "0",
+                                            style: bodyTextStyle,
+                                            maxLines: 3,
+                                          );
+                                        })),
+                                    //Type
+                                    DataCell(FutureBuilder<
+                                            DocumentSnapshot<ItemType>>(
+                                        future:
+                                            affirmationsTypeDocument(item.type)
+                                                .get(),
+                                        builder: (context,
+                                            AsyncSnapshot<
+                                                    DocumentSnapshot<ItemType>>
+                                                snapshot) {
+                                          if (snapshot.hasData) {
+                                            return Text(
+                                              "${snapshot.data?.data()?.name}",
+                                              style: bodyTextStyle,
+                                              maxLines: 3,
+                                            );
+                                          }
+                                          return Text(
+                                            "0",
+                                            style: bodyTextStyle,
+                                            maxLines: 3,
+                                          );
+                                        })),
                                     DataCell(Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -307,7 +367,7 @@ class AffirmationsItemsPage extends StatelessWidget {
                                             color: Colors.grey.shade600,
                                           ),
                                         ),
-                                        IconButton(
+                                        /* IconButton(
                                           iconSize: 25,
                                           onPressed: () {
                                             //TODO:VIEW ITEM
@@ -316,7 +376,7 @@ class AffirmationsItemsPage extends StatelessWidget {
                                             FontAwesomeIcons.eye,
                                             color: Colors.grey.shade600,
                                           ),
-                                        ),
+                                        ), */
                                         IconButton(
                                           iconSize: 25,
                                           onPressed: () {

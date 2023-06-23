@@ -242,19 +242,14 @@ class TherapyCategoriesPage extends StatelessWidget {
                                 ),
                                 size: ColumnSize.L,
                               ),
-                              DataColumn(
-                                label: Text(
-                                  'Order',
-                                  style: titleTextStyle,
-                                ),
-                              ),
+
                               DataColumn2(
                                 label: Text(
                                   'Actions',
                                   style: titleTextStyle,
                                   textAlign: TextAlign.center,
                                 ),
-                                fixedWidth: 160,
+                                fixedWidth: 100,
                               ),
                             ],
                             rows: List.generate(
@@ -290,12 +285,6 @@ class TherapyCategoriesPage extends StatelessWidget {
                                       height: 80,
                                       fit: BoxFit.contain,
                                     )),
-                                    DataCell(
-                                      Text(
-                                        "${item.order}",
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
 
                                     DataCell(Row(
                                       mainAxisAlignment:

@@ -61,10 +61,12 @@ class FirebaseSnapHelper<T> extends StatelessWidget {
     super.key,
     required this.future,
     required this.onSuccess,
+    this.onLoading,
   });
 
   Future<T> future;
   Function(T) onSuccess;
+  Function()? onLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -78,11 +80,13 @@ class FirebaseSnapHelper<T> extends StatelessWidget {
           if (snap.hasData) {
             return onSuccess(snap.data!);
           }
-          return SizedBox(
-            height: 50,
-            width: 50,
-            child: CircularProgressIndicator(),
-          );
+          return onLoading == null
+              ? SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: CircularProgressIndicator(),
+                )
+              : onLoading!();
         });
   }
 }

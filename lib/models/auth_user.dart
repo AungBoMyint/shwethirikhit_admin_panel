@@ -17,7 +17,9 @@ class AuthUser with _$AuthUser {
     String? avatar,
     int? status, //0 == customer,1 == Admin
     String? token,
-    required bool isActive,
+    String? age,
+    List<String>? area,
+    List<String>? nameList,
   }) = _AuthUser;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) =>

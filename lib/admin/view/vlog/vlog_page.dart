@@ -245,7 +245,7 @@ class VlogPage extends StatelessWidget {
                                   style: titleTextStyle,
                                   textAlign: TextAlign.center,
                                 ),
-                                fixedWidth: 160,
+                                fixedWidth: 135,
                               ),
                             ],
                             rows: List.generate(

@@ -57,6 +57,20 @@ class DrawerItems extends GetView<AdminLoginController> {
                 verticalSpace(v: 15),
 
                 verticalSpace(v: 10),
+                //Overview
+                Obx(() {
+                  final pageType = adminUiController.pageType.value!
+                      .getOrElse(() => PageType.initial());
+                  return DrawerItem(
+                    onTap: () =>
+                        adminUiController.changePageType(PageType.initial()),
+                    textTheme: textTheme,
+                    isSelected: pageType == PageType.initial(),
+                    imageIcon: AdminIcon.columnChart,
+                    label: "Overview",
+                  );
+                }),
+                verticalSpace(v: 10),
                 //News
                 ExpandablePanel(
                   theme: ExpandableThemeData(
@@ -250,7 +264,21 @@ class DrawerItems extends GetView<AdminLoginController> {
                     }),
                   ),
                 ),
-
+                verticalSpace(v: 10),
+                //Vlog
+                Obx(() {
+                  final pageType = adminUiController.pageType.value!
+                      .getOrElse(() => PageType.initial());
+                  return DrawerItem(
+                    onTap: () =>
+                        adminUiController.changePageType(PageType.customers()),
+                    textTheme: textTheme,
+                    isSelected: pageType == PageType.vlog() ||
+                        pageType == PageType.vlogAdd(),
+                    imageIcon: AdminIcon.rowUser,
+                    label: "Users",
+                  );
+                }),
                 verticalSpace(v: 10),
                 Divider(),
                 verticalSpace(),

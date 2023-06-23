@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
@@ -212,6 +213,13 @@ class ItemPage extends StatelessWidget {
                                 ),
                                 size: ColumnSize.L,
                               ),
+                              DataColumn2(
+                                label: Text(
+                                  'Type',
+                                  style: titleTextStyle,
+                                ),
+                                size: ColumnSize.L,
+                              ),
                               DataColumn(
                                 label: Text(
                                   'Rating',
@@ -224,7 +232,7 @@ class ItemPage extends StatelessWidget {
                                   style: titleTextStyle,
                                   textAlign: TextAlign.center,
                                 ),
-                                fixedWidth: 160,
+                                fixedWidth: 135,
                               ),
                             ],
                             rows: List.generate(
@@ -260,6 +268,27 @@ class ItemPage extends StatelessWidget {
                                       height: 80,
                                       fit: BoxFit.contain,
                                     )),
+                                    DataCell(FutureBuilder<
+                                            DocumentSnapshot<ItemType>>(
+                                        future:
+                                            homeTypeDocument(item.type).get(),
+                                        builder: (context,
+                                            AsyncSnapshot<
+                                                    DocumentSnapshot<ItemType>>
+                                                snapshot) {
+                                          if (snapshot.hasData) {
+                                            return Text(
+                                              "${snapshot.data?.data()?.name}",
+                                              style: bodyTextStyle,
+                                              maxLines: 3,
+                                            );
+                                          }
+                                          return Text(
+                                            "0",
+                                            style: bodyTextStyle,
+                                            maxLines: 3,
+                                          );
+                                        })),
                                     DataCell(
                                       Text(
                                         "${item.rating}",

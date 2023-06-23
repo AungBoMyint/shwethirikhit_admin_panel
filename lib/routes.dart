@@ -5,6 +5,7 @@ import 'admin/bin/password_reset_binding.dart';
 import 'admin/view/admin_login_page.dart';
 import 'admin/view/admin_main_screen.dart';
 import 'admin/view/forget_password_page.dart';
+import 'admin/view/user/user_profile_page.dart';
 import 'admin/view/user_profile_page.dart';
 import 'constant/data.dart';
 

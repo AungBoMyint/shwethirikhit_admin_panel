@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:pizza/admin/controller/therapy_controller.dart';
 import 'package:pizza/admin/controller/vlog_controller.dart';
 import 'package:pizza/admin/widgets/vlog/vlog_add_form.dart';
+import 'package:pizza/models/object_models/category.dart';
 import 'package:pizza/models/object_models/therapy_video.dart';
 import 'package:pizza/models/object_models/vlog_video.dart';
 import 'package:pizza/service/reference.dart';
@@ -242,11 +244,17 @@ class TherapyVideosPage extends StatelessWidget {
                               ),
                               DataColumn2(
                                 label: Text(
+                                  'Category',
+                                  style: titleTextStyle,
+                                ),
+                              ),
+                              DataColumn2(
+                                label: Text(
                                   'Actions',
                                   style: titleTextStyle,
                                   textAlign: TextAlign.center,
                                 ),
-                                fixedWidth: 160,
+                                fixedWidth: 135,
                               ),
                             ],
                             rows: List.generate(
@@ -289,6 +297,29 @@ class TherapyVideosPage extends StatelessWidget {
                                       ),
                                     ),
 
+                                    DataCell(FutureBuilder<
+                                            DocumentSnapshot<Category>>(
+                                        future: therapyCategoryDocument(
+                                                item.parentID)
+                                            .get(),
+                                        builder: (context,
+                                            AsyncSnapshot<
+                                                    DocumentSnapshot<Category>>
+                                                snapshot) {
+                                          if (snapshot.hasData) {
+                                            return Text(
+                                              "${snapshot.data?.data()?.name}",
+                                              style: bodyTextStyle,
+                                              maxLines: 3,
+                                            );
+                                          }
+                                          return Text(
+                                            "",
+                                            style: bodyTextStyle,
+                                            maxLines: 3,
+                                          );
+                                        })),
+
                                     DataCell(Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -304,7 +335,7 @@ class TherapyVideosPage extends StatelessWidget {
                                             color: Colors.grey.shade600,
                                           ),
                                         ),
-                                        IconButton(
+                                        /* IconButton(
                                           iconSize: 25,
                                           onPressed: () {
                                             //TODO:Vlog View
@@ -313,7 +344,7 @@ class TherapyVideosPage extends StatelessWidget {
                                             FontAwesomeIcons.eye,
                                             color: Colors.grey.shade600,
                                           ),
-                                        ),
+                                        ), */
                                         IconButton(
                                           iconSize: 25,
                                           onPressed: () {

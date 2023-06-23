@@ -55,11 +55,10 @@ class AdminLoginPage extends GetView<AdminLoginController> {
                     //Logo And Text
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: SvgPicture.asset(
-                        AdminIcon.nuclear,
+                      leading: Image.asset(
+                        AdminIcon.logo,
                         width: 30,
                         height: 30,
-                        color: Theme.of(context).iconTheme.color,
                       ),
                       title: Text(
                         "Shwe Thiri Khit",

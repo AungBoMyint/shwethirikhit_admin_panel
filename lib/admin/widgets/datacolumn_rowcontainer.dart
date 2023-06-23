@@ -55,38 +55,25 @@ class DataColumnRowContainer extends GetView<AdminUiController> {
     );
     log("RBPoint: ${controller.rbPoint.value!.getOrElse(() => const RBPoint.mobile())}");
 
-    return Expanded(
-      child: Container(
-          height: controller.rbPoint.value!.fold(
-            (l) => 0,
-            (r) => r.map(
-              xl: (_) => 120,
-              desktop: (_) => 120,
-              tablet: (_) => 100,
-              mobile: (_) => 80,
+    return SizedBox(
+      width: 250,
+      height: 200,
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: const BorderRadius.all(
+              Radius.circular(20),
             ),
-          ),
-          padding: const EdgeInsets.all(
-            5,
-          ),
-          decoration: BoxDecoration(
-              color: containerBackgroundColor,
-              borderRadius: const BorderRadius.all(
-                Radius.circular(2),
-              ),
-              border:
-                  !(border == null) ? border : Border.all(color: Colors.grey)),
+            side: BorderSide(
+              color: Colors.grey,
+            )),
+        child: Padding(
+          padding: const EdgeInsets.all(15.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment:
-                columnCrossAxisAlignment ?? CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              /*  Divider(),
-                verticalSpace, */
-              //Container header
               Row(
-                mainAxisAlignment:
-                    rowMainAxisAlignment ?? MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   //Icon
                   CircleAvatar(
@@ -129,18 +116,20 @@ class DataColumnRowContainer extends GetView<AdminUiController> {
                     ),
                   ),
                   //Data
-                  Text(
-                    topData,
-                    style: textTheme.displayLarge?.copyWith(
-                      fontSize: controller.rbPoint.value!
-                          .getOrElse(() => RBPoint.xl())
-                          .map(
-                              xl: (_) => 16,
-                              desktop: (_) => 14,
-                              tablet: (_) => 12,
-                              mobile: (_) => 10),
+                  Expanded(
+                    child: Text(
+                      topData,
+                      style: textTheme.displayLarge?.copyWith(
+                        fontSize: controller.rbPoint.value!
+                            .getOrElse(() => RBPoint.xl())
+                            .map(
+                                xl: (_) => 16,
+                                desktop: (_) => 14,
+                                tablet: (_) => 12,
+                                mobile: (_) => 10),
+                      ),
+                      maxLines: 2,
                     ),
-                    maxLines: 2,
                   ),
                 ],
               ),
@@ -183,9 +172,11 @@ class DataColumnRowContainer extends GetView<AdminUiController> {
                 ),
               ),
               /*  verticalSpace,
-                Divider(), */
+                    Divider(), */
             ],
-          )),
+          ),
+        ),
+      ),
     );
   }
 }

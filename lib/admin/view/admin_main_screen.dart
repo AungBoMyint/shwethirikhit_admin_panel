@@ -7,8 +7,12 @@ import 'package:pizza/admin/view/affirmations/type_page.dart';
 import 'package:pizza/admin/view/news/item_add_page.dart';
 import 'package:pizza/admin/view/news/item_page.dart';
 import 'package:pizza/admin/view/news/type_page.dart';
+import 'package:pizza/admin/view/overview/overview_page.dart';
 import 'package:pizza/admin/view/therapy/categories_page.dart';
 import 'package:pizza/admin/view/therapy/therapy_videos_page.dart';
+import 'package:pizza/admin/view/user/add_customer_page.dart';
+import 'package:pizza/admin/view/user/customers_page.dart';
+import 'package:pizza/admin/view/user/user_profile_page.dart';
 import 'package:pizza/admin/view/vlog/vlog_page.dart';
 import 'dart:developer';
 import '../../constant/icon.dart';
@@ -191,7 +195,11 @@ class DesktopXLSizeLayout extends StatelessWidget {
                   child: Obx(() => adminUiController.pageType.value!.fold(
                         (l) => const SizedBox(),
                         (r) => r.map(
-                          initial: (_) => Container(),
+                          initial: (_) => OverviewPage(
+                              verticalSpace: verticalSpace,
+                              horizontalSpace: horizontalSpace,
+                              girlNetworkImage: girlNetworkImage,
+                              textTheme: textTheme),
                           news: (_) => Container(),
                           newsSlider: (_) => SliderPage(),
                           newsType: (_) => TypePage(),
@@ -199,8 +207,8 @@ class DesktopXLSizeLayout extends StatelessWidget {
                           newsItemsAdd: (_) => ItemAddPage(),
                           vlog: (_) => VlogPage(),
                           vlogAdd: (_) => Container(),
-                          customers: (_) => Container(),
-                          addCustomer: (_) => Container(),
+                          customers: (_) => CustomersPage(),
+                          addCustomer: (_) => AddCustomerPage(),
                           learning: (_) => Container(),
                           therapy: (_) => Container(),
                           therapyCategory: (_) => TherapyCategoriesPage(),
@@ -213,7 +221,7 @@ class DesktopXLSizeLayout extends StatelessWidget {
                           affirmationsItems: (_) => AffirmationsItemsPage(),
                           affirmationsItemsAdd: (_) => Container(),
                           settings: (_) => Container(),
-                          updateProfile: (_) => Container(),
+                          updateProfile: (_) => AddCustomerPage(),
                         ),
                       )),
                 ),

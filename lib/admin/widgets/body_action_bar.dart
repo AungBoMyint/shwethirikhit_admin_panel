@@ -226,8 +226,8 @@ void showPopupMenu(BuildContext context, Offset position) async {
       //Profile
       PopupMenuItem(
         onTap: () {
-          crController.initializeUpdateProfile();
-          /*  adminUiController.setPageType(const PageType.updateProfile()); */
+          crController.setEditUser(alController.currentUser.value);
+          adminUiController.changePageType(const PageType.updateProfile());
         },
         value: 'profile',
         child: ListTile(

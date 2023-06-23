@@ -35,4 +35,5 @@ class AdminIcon {
   static const horizontalDots = "assets/admin/dots.png";
   static const adminLoginImage = "assets/admin/admin_cover.png";
   static const adminForgetPassword = "assets/admin/admin_forget_password.png";
+  static const logo = "assets/admin/logo.jpg";
 }
