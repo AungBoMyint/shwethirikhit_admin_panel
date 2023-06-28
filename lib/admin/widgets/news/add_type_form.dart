@@ -49,6 +49,7 @@ class _AddTypeFormState extends State<AddTypeForm> {
 
   @override
   Widget build(BuildContext context) {
+    final NewsController newsController = Get.find();
     return Form(
       key: formKey,
       child: SingleChildScrollView(
@@ -81,7 +82,7 @@ class _AddTypeFormState extends State<AddTypeForm> {
                     final itemType = ItemType(
                       id: Uuid().v1(),
                       name: nameTextController.text,
-                      dateTime: DateTime.now().toIso8601String(),
+                      dateTime: DateTime.now(),
                       order: 0,
                       nameList: subName,
                     );
@@ -93,6 +94,7 @@ class _AddTypeFormState extends State<AddTypeForm> {
                       setState(() {
                         nameTextController.clear();
                       });
+                      newsController.types.add(itemType);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -108,8 +110,11 @@ class _AddTypeFormState extends State<AddTypeForm> {
                         homeTypeDocument(itemType.id),
                         itemType,
                         "Type updating is successful.",
-                        "Type updating is failed.",
-                        () {});
+                        "Type updating is failed.", () {
+                      final index = newsController.types
+                          .indexWhere((e) => e.id == itemType.id);
+                      newsController.types[index] = itemType;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

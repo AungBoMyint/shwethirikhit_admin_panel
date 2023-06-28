@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -22,8 +22,33 @@ import '../../utils/func.dart';
 import '../../utils/space.dart';
 import '../../utils/widgets.dart';
 
-class ItemPage extends StatelessWidget {
+class ItemPage extends StatefulWidget {
   const ItemPage({super.key});
+
+  @override
+  State<ItemPage> createState() => _ItemPageState();
+}
+
+class _ItemPageState extends State<ItemPage> {
+  final NewsController newsController = Get.find();
+
+  late ScrollController scrollController;
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0);
+    newsController.setItemScrollControllerListener(scrollController);
+    newsController.startGetItems();
+    debugPrint("*************************ExpertModel init*************");
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    debugPrint("*******************ExpertModel dispose*******************");
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,213 +167,191 @@ class ItemPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<ExpertModel>(
-                      query: newsController.itemsQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final items = newsController.expertModels;
+                    final selectedAll = newsController.itemsSelectedAll.value;
+                    final selectedRow = newsController.itemsSelectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                newsController.setItemsSelectedAll(items);
+                              } else {
+                                newsController.setItemsSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
+                          ),
+                          fixedWidth: 80,
+                        ),
 
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setItemsSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll =
-                              newsController.itemsSelectedAll.value;
-                          final selectedRow = newsController.itemsSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                newsController.itemScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Type',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Rating',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 135,
+                        ),
+                      ],
+                      rows: List.generate(
+                        items.length,
+                        (index) {
+                          final item = items[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      newsController
-                                          .setItemsSelectedAll(snapshot.docs);
-                                    } else {
-                                      newsController.setItemsSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) =>
+                                      newsController.setItemsSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
                               ),
 
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
+                              DataCell(
+                                Text(
+                                  item.name,
+                                  style: bodyTextStyle,
                                 ),
                               ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Type',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Rating',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                fixedWidth: 135,
-                              ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => newsController
-                                            .setItemsSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-
-                                    DataCell(
-                                      Text(
-                                        item.name,
+                              //Total Items
+                              DataCell(Image.network(
+                                item.photolink,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
+                              DataCell(FutureBuilder<
+                                      DocumentSnapshot<ItemType>>(
+                                  future: homeTypeDocument(item.type).get(),
+                                  builder: (context,
+                                      AsyncSnapshot<DocumentSnapshot<ItemType>>
+                                          snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(
+                                        "${snapshot.data?.data()?.name}",
                                         style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Total Items
-                                    DataCell(Image.network(
-                                      item.photolink,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-                                    DataCell(FutureBuilder<
-                                            DocumentSnapshot<ItemType>>(
-                                        future:
-                                            homeTypeDocument(item.type).get(),
-                                        builder: (context,
-                                            AsyncSnapshot<
-                                                    DocumentSnapshot<ItemType>>
-                                                snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data?.data()?.name}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
-                                    DataCell(
-                                      Text(
-                                        "${item.rating}",
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
+                                        maxLines: 3,
+                                      );
+                                    }
+                                    return Text(
+                                      "0",
+                                      style: bodyTextStyle,
+                                      maxLines: 3,
+                                    );
+                                  })),
+                              DataCell(
+                                Text(
+                                  "${item.rating}",
+                                  style: bodyTextStyle,
+                                ),
+                              ),
 
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete<ExpertModel>(
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete<ExpertModel>(
                                               expertsDocument(item.id ?? ""),
                                               "Item deleting is successful.",
-                                              "Item deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            newsController
-                                                .setSelectedExpertItem(
-                                                    left(item));
-                                            controller.changePageType(
-                                                PageType.newsItemsAdd());
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.eye,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            newsController
-                                                .setSelectedExpertItem(
-                                                    right(item));
-                                            controller.changePageType(
-                                                PageType.newsItemsAdd());
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                              "Item deleting is failed.")
+                                          .then((value) {
+                                        final index = newsController
+                                            .expertModels
+                                            .indexWhere((element) =>
+                                                element.id == item.id);
+                                        newsController.expertModels
+                                            .removeAt(index);
+                                      });
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      newsController
+                                          .setSelectedExpertItem(left(item));
+                                      controller.changePageType(
+                                          PageType.newsItemsAdd());
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.eye,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      newsController
+                                          .setSelectedExpertItem(right(item));
+                                      controller.changePageType(
+                                          PageType.newsItemsAdd());
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -382,10 +385,12 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<ExpertModel>(
-          prController.itemsSelectedRow,
-          expertsCollection(),
-        ),
+        onTap: () {
+          deleteItems<ExpertModel>(
+            prController.itemsSelectedRow,
+            expertsCollection(),
+          ).then((value) => prController.expertModels.clear());
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

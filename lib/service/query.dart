@@ -8,14 +8,17 @@ import '../models/object_models/type.dart';
 import '../models/object_models/vlog_video.dart';
 import 'reference.dart';
 
-Query<ExpertModel> allExpertQuery() => expertsCollection();
+Query<ExpertModel> allExpertQuery() =>
+    expertsCollection().orderBy('name').orderBy('dateTime').limit(10);
 Query<ExpertModel> expertQuery(String typeID) =>
     expertsCollection().where("type", isEqualTo: typeID);
-Query<Category> homeCategoryQuery =
-    categoryCollection().orderBy('order', descending: true);
+Query<Category> homeCategoryQuery = categoryCollection()
+    .orderBy('dateTime', descending: true)
+    .orderBy('name')
+    .limit(10);
 Query<Category> affirmationsCategoryQuery =
-    affirmationsCategoryCollection().orderBy('order');
-Query<ItemType> homeTypeQuery = homeTypeCollection().orderBy('order');
+    affirmationsCategoryCollection().orderBy('dateTime').limit(10);
+Query<ItemType> homeTypeQuery = homeTypeCollection().orderBy('order').limit(10);
 Query<ItemType> affirmationsTypeQuery =
     affirmationsTypeCollection().orderBy('order');
 
@@ -26,12 +29,12 @@ Query<Music> affirmationsCategoryMusicsQuery(String categoryID) =>
         .where("categoryID", isEqualTo: categoryID)
         .orderBy("dateTime");
 Query<Music> allAffirmationsMusicsQuery() =>
-    musicCollection().orderBy("dateTime");
+    musicCollection().orderBy("dateTime").limit(10);
 
 Query<VlogVideo> vlogVideoQuery =
-    vlogVideoCollection().orderBy("dateTime", descending: true);
+    vlogVideoCollection().orderBy("dateTime", descending: true).limit(10);
 Query<Category> therapyCategoryQuery =
-    therapyCategoryCollection().orderBy("order");
+    therapyCategoryCollection().orderBy("dateTime", descending: true).limit(10);
 /* Query<TherapyVideo> therapyVideoQuery =
     therapyVideoCollection().orderBy("order", descending: true); */
 Query<TherapyVideo> therapyVideosQuery(String categoryID) =>
@@ -39,4 +42,4 @@ Query<TherapyVideo> therapyVideosQuery(String categoryID) =>
         .where("parentID", isEqualTo: categoryID)
         .orderBy('order');
 Query<TherapyVideo> allTherapyVideosQuery() =>
-    therapyVideoCollection().orderBy('order');
+    therapyVideoCollection().orderBy('dateTime', descending: true).limit(10);

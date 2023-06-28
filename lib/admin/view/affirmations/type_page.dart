@@ -23,8 +23,30 @@ import '../../utils/widgets.dart';
 import '../../widgets/affirmations/add_affirmationstype_form.dart';
 import '../../widgets/news/add_type_form.dart';
 
-class AffirmationsTypePage extends StatelessWidget {
+class AffirmationsTypePage extends StatefulWidget {
   const AffirmationsTypePage({super.key});
+
+  @override
+  State<AffirmationsTypePage> createState() => _AffirmationsTypePageState();
+}
+
+class _AffirmationsTypePageState extends State<AffirmationsTypePage> {
+  late ScrollController scrollController;
+  final AffirmationsController newsController = Get.find();
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0.0);
+    newsController.setTypeScrollControllerListener(scrollController);
+    newsController.startGetTypes();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,200 +193,173 @@ class AffirmationsTypePage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<ItemType>(
-                      query: newsController.typeQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final types = newsController.types;
+                    final selectedAll = newsController.typeSelectedAll.value;
+                    final selectedRow = newsController.typeSelectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                newsController.setTypeSelectedAll(types);
+                              } else {
+                                newsController.setTypeSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
+                          ),
+                          fixedWidth: 80,
+                        ),
 
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setTypeSnapshot(snapshot);
-                        }
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Total Items',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
 
-                        return Obx(() {
-                          final selectedAll =
-                              newsController.typeSelectedAll.value;
-                          final selectedRow = newsController.typeSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                newsController.typeScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 100,
+                        ),
+                      ],
+                      rows: List.generate(
+                        types.length,
+                        (index) {
+                          final item = types[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      newsController
-                                          .setTypeSelectedAll(snapshot.docs);
-                                    } else {
-                                      newsController.setTypeSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) =>
+                                      newsController.setTypeSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
                               ),
 
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
+                              DataCell(
+                                Text(
+                                  item.name,
+                                  style: bodyTextStyle,
                                 ),
                               ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Total Items',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                fixedWidth: 100,
-                              ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => newsController
-                                            .setTypeSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-
-                                    DataCell(
-                                      Text(
-                                        item.name,
+                              //Total Items
+                              DataCell(FutureBuilder(
+                                  future: expertQuery(item.id).get(),
+                                  builder: (context, AsyncSnapshot snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(
+                                        "${snapshot.data.docs.length}",
                                         style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Total Items
-                                    DataCell(FutureBuilder(
-                                        future: expertQuery(item.id).get(),
-                                        builder:
-                                            (context, AsyncSnapshot snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data.docs.length}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
+                                        maxLines: 3,
+                                      );
+                                    }
+                                    return Text(
+                                      "0",
+                                      style: bodyTextStyle,
+                                      maxLines: 3,
+                                    );
+                                  })),
 
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete<ItemType>(
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete<ItemType>(
                                               affirmationsTypeDocument(item.id),
                                               "Type deleting is successful.",
-                                              "Type deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.3,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child:
-                                                          AddAffirmationsTypeForm(
-                                                        width: size.width,
-                                                        newsController:
-                                                            newsController,
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        type: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                              "Type deleting is failed.")
+                                          .then((value) {
+                                        newsController.types.removeWhere(
+                                            (element) => element.id == item.id);
+                                      });
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.3,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child: AddAffirmationsTypeForm(
+                                                  width: size.width,
+                                                  newsController:
+                                                      newsController,
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  type: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -398,10 +393,12 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<ItemType>(
-          prController.typeSelectedRow,
-          affirmationsTypeCollection(),
-        ),
+        onTap: () {
+          deleteItems<ItemType>(
+            prController.typeSelectedRow,
+            affirmationsTypeCollection(),
+          ).then((value) => prController.types.clear());
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

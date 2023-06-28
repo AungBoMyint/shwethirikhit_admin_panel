@@ -11,13 +11,12 @@ import '../utils/debouncer.dart';
 class VlogController extends GetxController {
   //Left refer to View
   //Right refer to Upload,Update
-  Rxn<Query<VlogVideo>> vlogQuery = Rxn<Query<VlogVideo>>(vlogVideoQuery);
+  RxList<VlogVideo> vlogVideos = <VlogVideo>[].obs;
   final debouncer = Debouncer(milliseconds: 800);
   var videoDuration = "".obs;
-  FirestoreQueryBuilderSnapshot<VlogVideo>? vlogSnapshot;
-
-  final ScrollController scrollController =
-      ScrollController(initialScrollOffset: 0);
+  Rxn<Query<VlogVideo>> vlogQuery = Rxn<Query<VlogVideo>>();
+  var scrollLoading = false.obs;
+  var vlogVideoFetching = false.obs;
 
   RxList<String> selectedRow = <String>[].obs;
 
@@ -36,17 +35,12 @@ class VlogController extends GetxController {
 
   void startVlogSearch(String value) {
     if (value.isNotEmpty) {
-      vlogQuery.value = vlogVideoCollection().where(
-        "nameList",
-        arrayContains: value.toLowerCase(),
-      );
+      getVlogVideos(
+          vlogVideoQuery.where("nameList", arrayContains: value.toLowerCase()));
     } else {
-      vlogQuery.value = vlogVideoQuery;
+      getVlogVideos(vlogVideoQuery);
     }
   }
-
-  void setVlogSnapshot(FirestoreQueryBuilderSnapshot<VlogVideo> v) =>
-      vlogSnapshot = v;
 
   void setSelectedRow(VlogVideo item) {
     if (selectedRow.contains(item.id)) {
@@ -56,22 +50,43 @@ class VlogController extends GetxController {
     }
   }
 
-  void setSelectedAll(List<QueryDocumentSnapshot<VlogVideo>>? items) {
+  void setSelectedAll(List<VlogVideo>? items) {
     selectedAll.value = items == null ? false : true;
-    selectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id).toList();
+    selectedRow.value = items == null ? [] : items.map((e) => e.id).toList();
   }
 
-  @override
-  void onInit() {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels ==
-          scrollController.position.maxScrollExtent) {
-        if (!(vlogSnapshot == null) && vlogSnapshot!.hasMore) {
-          vlogSnapshot!.fetchMore();
+  void setScrollListener(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        if (!(scrollLoading.value)) {
+          scrollLoading.value = true;
+          debugPrint("************News Types Pagination are fetching......");
+          vlogVideoQuery
+              .startAfter([vlogVideos.last.dateTime.toIso8601String()])
+              .get()
+              .then((value) {
+                vlogVideos.addAll(value.docs.map((e) => e.data()).toList());
+                scrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
         }
       }
     });
-    super.onInit();
+  }
+
+  Future<void> startGetVlog() async {
+    if (vlogVideos.isEmpty) {
+      await getVlogVideos(vlogVideoQuery);
+    }
+  }
+
+  Future<void> getVlogVideos(Query<VlogVideo> query) async {
+    vlogQuery.value = query;
+    vlogVideoFetching.value = true;
+    final value = await query.get();
+    vlogVideos.value = value.docs.map((e) => e.data()).toList();
+    vlogVideoFetching.value = false;
   }
 }

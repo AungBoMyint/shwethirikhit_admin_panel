@@ -113,6 +113,7 @@ class _AddAffirmationsCategoryFormState
                         nameTextController.clear();
                         imageTextController.clear();
                       });
+                      widget.affirmationsController.categories.add(category);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -130,8 +131,12 @@ class _AddAffirmationsCategoryFormState
                         affirmationsCategoryDocument(category.id),
                         category,
                         "Category updating is successful.",
-                        "Category updating is failed.",
-                        () {});
+                        "Category updating is failed.", () {
+                      final index = widget.affirmationsController.categories
+                          .indexWhere((element) => element.id == category.id);
+                      widget.affirmationsController.categories[index] =
+                          category;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

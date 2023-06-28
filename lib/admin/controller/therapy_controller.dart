@@ -15,18 +15,19 @@ class TherapyController extends GetxController {
   //Left refer to View
   //Right refer to Upload,Update
   var videoDuration = "".obs;
-  Rxn<Query<Category>> categoriesQuery =
-      Rxn<Query<Category>>(therapyCategoryQuery);
-  Rxn<Query<TherapyVideo>> therapyVideoQuery =
-      Rxn<Query<TherapyVideo>>(allTherapyVideosQuery());
+  RxList<Category> categories = <Category>[].obs;
+  RxList<TherapyVideo> therapyVideos = <TherapyVideo>[].obs;
   final debouncer = Debouncer(milliseconds: 800);
-  FirestoreQueryBuilderSnapshot<Category>? categoriesSnapshot;
-  FirestoreQueryBuilderSnapshot<TherapyVideo>? therapyVideosSnapshot;
-
-  final ScrollController categoriesScrollController =
+  Rxn<Query<Category>> categoryQuery = Rxn<Query<Category>>();
+  Rxn<Query<TherapyVideo>> therapyVideoQuery = Rxn<Query<TherapyVideo>>();
+  var categoryFetchLoading = false.obs;
+  var therapyFetchLoading = false.obs;
+  var categoryScrollLoading = false.obs;
+  var therapyScrollLoading = false.obs;
+/*   final ScrollController categoriesScrollController =
       ScrollController(initialScrollOffset: 0);
   final ScrollController therapyVideosScrollController =
-      ScrollController(initialScrollOffset: 0);
+      ScrollController(initialScrollOffset: 0); */
 
   RxList<String> categoriesSelectedRow = <String>[].obs;
   RxList<String> therapyVideosSelectedRow = <String>[].obs;
@@ -46,28 +47,21 @@ class TherapyController extends GetxController {
 
   void startCategoriesSearch(String value) {
     if (value.isNotEmpty) {
-      categoriesQuery.value = therapyCategoryQuery.where("nameList",
-          arrayContains: value.toLowerCase());
+      getCategories(therapyCategoryQuery.where("nameList",
+          arrayContains: value.toLowerCase()));
     } else {
-      categoriesQuery.value = therapyCategoryQuery;
+      getCategories(therapyCategoryQuery);
     }
   }
 
   void startTherapyVideosSearch(String value) {
     if (value.isNotEmpty) {
-      therapyVideoQuery.value = allTherapyVideosQuery()
-          .where("nameList", arrayContains: value.toLowerCase());
+      getTherapyVideo(allTherapyVideosQuery()
+          .where("nameList", arrayContains: value.toLowerCase()));
     } else {
-      therapyVideoQuery.value = allTherapyVideosQuery();
+      getTherapyVideo(allTherapyVideosQuery());
     }
   }
-
-  void setcategoriesSnapshot(FirestoreQueryBuilderSnapshot<Category> v) =>
-      categoriesSnapshot = v;
-
-  void settherapyVideosSnapshot(
-          FirestoreQueryBuilderSnapshot<TherapyVideo> v) =>
-      therapyVideosSnapshot = v;
 
   void setcategoriesSelectedRow(Category item) {
     if (categoriesSelectedRow.contains(item.id)) {
@@ -85,39 +79,85 @@ class TherapyController extends GetxController {
     }
   }
 
-  void setcategoriesSelectedAll(List<QueryDocumentSnapshot<Category>>? items) {
+  void setcategoriesSelectedAll(List<Category>? items) {
     categoriesSelectedAll.value = items == null ? false : true;
     categoriesSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id).toList();
+        items == null ? [] : items.map((e) => e.id).toList();
   }
 
-  void settherapyVideosSelectedAll(
-      List<QueryDocumentSnapshot<TherapyVideo>>? items) {
+  void settherapyVideosSelectedAll(List<TherapyVideo>? items) {
     therapyVideosSelectedAll.value = items == null ? false : true;
     therapyVideosSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id).toList();
+        items == null ? [] : items.map((e) => e.id).toList();
   }
 
-  @override
-  void onInit() {
-    categoriesScrollController.addListener(() {
-      if (categoriesScrollController.position.pixels ==
-          categoriesScrollController.position.maxScrollExtent) {
-        if (!(categoriesSnapshot == null) && categoriesSnapshot!.hasMore) {
-          categoriesSnapshot!.fetchMore();
-        }
-      }
-    });
-    therapyVideosScrollController.addListener(() {
-      if (therapyVideosScrollController.position.pixels ==
-          therapyVideosScrollController.position.maxScrollExtent) {
-        if (!(therapyVideosSnapshot == null) &&
-            therapyVideosSnapshot!.hasMore) {
-          therapyVideosSnapshot!.fetchMore();
-        }
-      }
-    });
+  Future<void> getCategories(Query<Category> query) async {
+    categoryQuery.value = query;
+    categoryFetchLoading.value = true;
+    final value = await query.get();
+    categories.value = value.docs.map((e) => e.data()).toList();
+    categoryFetchLoading.value = false;
+  }
 
-    super.onInit();
+  Future<void> getTherapyVideo(Query<TherapyVideo> query) async {
+    therapyVideoQuery.value = query;
+    therapyFetchLoading.value = true;
+    final value = await query.get();
+    therapyVideos.value = value.docs.map((e) => e.data()).toList();
+    therapyFetchLoading.value = false;
+  }
+
+  void setCategoryScrollController(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        if (!(categoryScrollLoading.value)) {
+          categoryScrollLoading.value = true;
+          debugPrint("************News Types Pagination are fetching......");
+          therapyCategoryQuery
+              .startAfter([categories.last.dateTime.toIso8601String()])
+              .get()
+              .then((value) {
+                categories.addAll(value.docs.map((e) => e.data()).toList());
+                categoryScrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
+        }
+      }
+    });
+  }
+
+  void setTherapyScrollListener(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        if (!(therapyScrollLoading.value)) {
+          therapyScrollLoading.value = true;
+          debugPrint("************News Types Pagination are fetching......");
+          allTherapyVideosQuery()
+              .startAfter([categories.last.dateTime.toIso8601String()])
+              .get()
+              .then((value) {
+                therapyVideos.addAll(value.docs.map((e) => e.data()).toList());
+                therapyScrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
+        }
+      }
+    });
+  }
+
+  Future<void> startGetCategories() async {
+    if (categories.isEmpty) {
+      await getCategories(therapyCategoryQuery);
+    }
+  }
+
+  Future<void> startGetTherapyVideos() async {
+    if (therapyVideos.isEmpty) {
+      await getTherapyVideo(allTherapyVideosQuery());
+    }
   }
 }

@@ -18,8 +18,30 @@ import '../../utils/space.dart';
 import '../../utils/widgets.dart';
 import '../../widgets/therapy/add_therapyvideo_form.dart';
 
-class TherapyVideosPage extends StatelessWidget {
+class TherapyVideosPage extends StatefulWidget {
   const TherapyVideosPage({super.key});
+
+  @override
+  State<TherapyVideosPage> createState() => _TherapyVideosPageState();
+}
+
+class _TherapyVideosPageState extends State<TherapyVideosPage> {
+  final TherapyController therapyController = Get.find();
+  late ScrollController scrollController;
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0.0);
+    therapyController.setTherapyScrollListener(scrollController);
+    therapyController.startGetTherapyVideos();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +50,6 @@ class TherapyVideosPage extends StatelessWidget {
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
     final size = MediaQuery.of(context).size;
-    final TherapyController therapyController = Get.find();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -162,180 +183,158 @@ class TherapyVideosPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<TherapyVideo>(
-                      query: therapyController.therapyVideoQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final therapyVideos = therapyController.therapyVideos;
+                    final selectedAll =
+                        therapyController.therapyVideosSelectedAll.value;
+                    final selectedRow =
+                        therapyController.therapyVideosSelectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                therapyController
+                                    .settherapyVideosSelectedAll(therapyVideos);
+                              } else {
+                                therapyController
+                                    .settherapyVideosSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
-
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          therapyController.settherapyVideosSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll =
-                              therapyController.therapyVideosSelectedAll.value;
-                          final selectedRow =
-                              therapyController.therapyVideosSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                therapyController.therapyVideosScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                          ),
+                          fixedWidth: 80,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Video',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Category',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 135,
+                        ),
+                      ],
+                      rows: List.generate(
+                        therapyVideos.length,
+                        (index) {
+                          final item = therapyVideos[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      therapyController
-                                          .settherapyVideosSelectedAll(
-                                              snapshot.docs);
-                                    } else {
-                                      therapyController
-                                          .settherapyVideosSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) => therapyController
+                                      .settherapyVideosSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
                               ),
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Video',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Category',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                fixedWidth: 135,
-                              ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => therapyController
-                                            .settherapyVideosSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
 
-                                    DataCell(
-                                      Text(
-                                        item.title,
+                              DataCell(
+                                Text(
+                                  item.title,
+                                  style: bodyTextStyle,
+                                ),
+                              ),
+                              //Total Items
+                              DataCell(Image.network(
+                                item.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
+                              DataCell(
+                                Text(
+                                  "${item.videoURL}",
+                                  style: bodyTextStyle,
+                                ),
+                              ),
+
+                              DataCell(FutureBuilder<
+                                      DocumentSnapshot<Category>>(
+                                  future: therapyCategoryDocument(item.parentID)
+                                      .get(),
+                                  builder: (context,
+                                      AsyncSnapshot<DocumentSnapshot<Category>>
+                                          snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(
+                                        "${snapshot.data?.data()?.name}",
                                         style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Total Items
-                                    DataCell(Image.network(
-                                      item.image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-                                    DataCell(
-                                      Text(
-                                        "${item.videoURL}",
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
+                                        maxLines: 3,
+                                      );
+                                    }
+                                    return Text(
+                                      "",
+                                      style: bodyTextStyle,
+                                      maxLines: 3,
+                                    );
+                                  })),
 
-                                    DataCell(FutureBuilder<
-                                            DocumentSnapshot<Category>>(
-                                        future: therapyCategoryDocument(
-                                                item.parentID)
-                                            .get(),
-                                        builder: (context,
-                                            AsyncSnapshot<
-                                                    DocumentSnapshot<Category>>
-                                                snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data?.data()?.name}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
-
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete<TherapyVideo>(
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete<TherapyVideo>(
                                               therapyVideoDocument(item.id),
                                               "Therapy Video deleting is successful.",
-                                              "Therapy Video deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        /* IconButton(
+                                              "Therapy Video deleting is failed.")
+                                          .then((value) => therapyController
+                                              .therapyVideos
+                                              .removeWhere(
+                                                  (e) => e.id == item.id));
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  /* IconButton(
                                           iconSize: 25,
                                           onPressed: () {
                                             //TODO:Vlog View
@@ -345,59 +344,54 @@ class TherapyVideosPage extends StatelessWidget {
                                             color: Colors.grey.shade600,
                                           ),
                                         ), */
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            //TODO:Vlog Edit Form
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.7,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child:
-                                                          AddTherapyVideoForm(
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        therapyController:
-                                                            therapyController,
-                                                        therapyVideo: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      //TODO:Vlog Edit Form
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.7,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child: AddTherapyVideoForm(
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  therapyController:
+                                                      therapyController,
+                                                  therapyVideo: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -431,10 +425,14 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<TherapyVideo>(
-          therapyController.therapyVideosSelectedRow,
-          therapyVideoCollection(),
-        ),
+        onTap: () {
+          deleteItems<TherapyVideo>(
+            therapyController.therapyVideosSelectedRow,
+            therapyVideoCollection(),
+          ).then((value) {
+            therapyController.therapyVideos.clear();
+          });
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

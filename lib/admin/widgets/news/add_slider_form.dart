@@ -51,6 +51,7 @@ class _AddSliderFormState extends State<AddSliderForm> {
 
   @override
   Widget build(BuildContext context) {
+    final NewsController newsController = Get.find();
     return Form(
       key: formKey,
       child: SingleChildScrollView(
@@ -110,6 +111,7 @@ class _AddSliderFormState extends State<AddSliderForm> {
                         nameTextController.clear();
                         imageTextController.clear();
                       });
+                      newsController.sliderCategories.add(category);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -127,8 +129,11 @@ class _AddSliderFormState extends State<AddSliderForm> {
                         categoryDocument(category.id),
                         category,
                         "Slider updating is successful.",
-                        "Slider updating is failed.",
-                        () {});
+                        "Slider updating is failed.", () {
+                      final index = newsController.sliderCategories
+                          .indexWhere((e) => e.id == category.id);
+                      newsController.sliderCategories[index] = category;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

@@ -309,6 +309,8 @@ class _ItemAddPageState extends State<ItemAddPage> {
                                           item,
                                           "Item uploading is successful.",
                                           "Item uploading is failed.", () {
+                                        //when finish uploading
+                                        newsController.expertModels.add(item);
                                         refresh(true);
                                       });
 
@@ -345,8 +347,14 @@ class _ItemAddPageState extends State<ItemAddPage> {
                                           expertsDocument(item.id!),
                                           item,
                                           "Item updating is successful.",
-                                          "Item updating is failed.",
-                                          () {});
+                                          "Item updating is failed.", () {
+                                        //when updating is finished
+                                        final index = newsController
+                                            .expertModels
+                                            .indexWhere((e) => e.id == item.id);
+                                        newsController.expertModels[index] =
+                                            item;
+                                      });
                                       debugPrint("******Uploading...Slider");
                                     }
                                   }

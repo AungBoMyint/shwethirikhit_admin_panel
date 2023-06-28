@@ -21,14 +21,35 @@ import '../../utils/show_loading.dart';
 import '../../utils/space.dart';
 import '../../widgets/button.dart';
 
-class CustomersPage extends StatelessWidget {
+class CustomersPage extends StatefulWidget {
   const CustomersPage({super.key});
+
+  @override
+  State<CustomersPage> createState() => _CustomersPageState();
+}
+
+class _CustomersPageState extends State<CustomersPage> {
+  late ScrollController scrollController;
+  final CustomerRelatedController crController = Get.find();
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0.0);
+    crController.setScrollListener(scrollController);
+    crController.startGetUsers();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AdminLoginController alController = Get.find();
     final AdminUiController adminUiController = Get.find();
-    final CustomerRelatedController crController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
@@ -133,206 +154,188 @@ class CustomersPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<AuthUser>(
-                      query: crController.userQuery.value!,
-                      builder: (context, snapshot, _) {
-                        log("Customer Total Length: ${snapshot.docs.length}");
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final users = crController.users;
+                    return DataTable2(
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      onSelectAll: (v) =>
+                          adminUiController.setDataTableSelectAll(),
+                      columns: [
+                        DataColumn2(
+                          label: Text(
+                            'ID',
+                            style: titleTextStyle,
+                          ),
+                          fixedWidth: 100,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'USER',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'ROLE',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'ACTIONS',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 160,
+                        ),
+                      ],
+                      rows: List.generate(users.length, (index) {
+                        final user = users[index];
+                        return DataRow(cells: [
+                          //ID
+                          DataCell(
+                            Text(
+                              user.id,
+                              style: textTheme.displayMedium,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          crController.setSnapshot(snapshot);
-                        }
-                        return LayoutBuilder(builder: (context, constraints) {
-                          return DataTable2(
-                            scrollController: crController.scrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            onSelectAll: (v) =>
-                                adminUiController.setDataTableSelectAll(),
-                            columns: [
-                              DataColumn2(
-                                label: Text(
-                                  'ID',
-                                  style: titleTextStyle,
-                                ),
-                                fixedWidth: 100,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'USER',
-                                  style: titleTextStyle,
+                          ),
+                          DataCell(Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundImage: NetworkImage(
+                                  user.avatar ?? emptyProfile,
                                 ),
                               ),
-                              DataColumn(
-                                label: Text(
-                                  'ROLE',
-                                  style: titleTextStyle,
+                              horizontalSpace(v: 10),
+                              Expanded(
+                                child: Text(
+                                  user.name,
+                                  style: textTheme.displayMedium,
+                                ),
+                              )
+                            ],
+                          )),
+                          DataCell(Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: user.status == 1
+                                    ? Colors.green.withOpacity(0.3)
+                                    : Colors.blue.withOpacity(0.3),
+                                child: user.status == 1
+                                    ? Icon(FontAwesomeIcons.userSecret,
+                                        color: Colors.green)
+                                    : Icon(
+                                        FontAwesomeIcons.user,
+                                        color: Colors.blue,
+                                      ),
+                              ),
+                              horizontalSpace(v: 10),
+                              Text(
+                                user.status == 1 ? "Admin" : "Customer",
+                                style: textTheme.displayMedium,
+                              )
+                            ],
+                          )),
+
+                          //ACTIONS
+                          DataCell(Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                iconSize: 25,
+                                onPressed: () {
+                                  showCustomDialog(context,
+                                      barrierColor: Colors.white.withOpacity(0),
+                                      width: MediaQuery.of(context).size.width *
+                                          0.3,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Are you sure you want to delete this user?",
+                                            style: textTheme.displayMedium,
+                                          ),
+                                          verticalSpace(),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              button(
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
+                                                text: "Cancel",
+                                                textStyle:
+                                                    textTheme.displayMedium!,
+                                              ).withBorder(
+                                                context,
+                                                borderColor: Colors.red,
+                                                borderRadius: 20,
+                                              ),
+                                              horizontalSpace(),
+                                              button(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                  crController
+                                                      .deleteUser(user.id)
+                                                      .then(
+                                                        (value) => crController
+                                                            .users
+                                                            .removeWhere(
+                                                                (element) =>
+                                                                    element
+                                                                        .id ==
+                                                                    user.id),
+                                                      );
+                                                },
+                                                text: "OK",
+                                                textStyle:
+                                                    textTheme.displayMedium!,
+                                              ).withBorder(
+                                                context,
+                                                borderRadius: 20,
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .primaryColor,
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ));
+                                },
+                                icon: Icon(
+                                  FontAwesomeIcons.trash,
+                                  color: Colors.grey.shade600,
                                 ),
                               ),
-                              DataColumn2(
-                                label: Text(
-                                  'ACTIONS',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
+                              IconButton(
+                                iconSize: 25,
+                                onPressed: () {
+                                  /* prController.setSelectedItem(item); */
+                                  crController.setEditUser(user);
+                                  adminUiController
+                                      .changePageType(PageType.addCustomer());
+                                },
+                                icon: Icon(
+                                  FontAwesomeIcons.pen,
+                                  color: Colors.grey.shade600,
                                 ),
-                                fixedWidth: 160,
                               ),
                             ],
-                            rows: List.generate(snapshot.docs.length, (index) {
-                              final user = snapshot.docs[index].data();
-                              return DataRow(cells: [
-                                //ID
-                                DataCell(
-                                  Text(
-                                    user.id,
-                                    style: textTheme.displayMedium,
-                                  ),
-                                ),
-                                DataCell(Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundImage: NetworkImage(
-                                        user.avatar ?? emptyProfile,
-                                      ),
-                                    ),
-                                    horizontalSpace(v: 10),
-                                    Expanded(
-                                      child: Text(
-                                        user.name,
-                                        style: textTheme.displayMedium,
-                                      ),
-                                    )
-                                  ],
-                                )),
-                                DataCell(Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: user.status == 1
-                                          ? Colors.green.withOpacity(0.3)
-                                          : Colors.blue.withOpacity(0.3),
-                                      child: user.status == 1
-                                          ? Icon(FontAwesomeIcons.userSecret,
-                                              color: Colors.green)
-                                          : Icon(
-                                              FontAwesomeIcons.user,
-                                              color: Colors.blue,
-                                            ),
-                                    ),
-                                    horizontalSpace(v: 10),
-                                    Text(
-                                      user.status == 1 ? "Admin" : "Customer",
-                                      style: textTheme.displayMedium,
-                                    )
-                                  ],
-                                )),
-
-                                //ACTIONS
-                                DataCell(Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      iconSize: 25,
-                                      onPressed: () {
-                                        showCustomDialog(context,
-                                            barrierColor:
-                                                Colors.white.withOpacity(0),
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.3,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  "Are you sure you want to delete this user?",
-                                                  style:
-                                                      textTheme.displayMedium,
-                                                ),
-                                                verticalSpace(),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    button(
-                                                      onPressed: () =>
-                                                          Navigator.of(context)
-                                                              .pop(),
-                                                      text: "Cancel",
-                                                      textStyle: textTheme
-                                                          .displayMedium!,
-                                                    ).withBorder(
-                                                      context,
-                                                      borderColor: Colors.red,
-                                                      borderRadius: 20,
-                                                    ),
-                                                    horizontalSpace(),
-                                                    button(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        crController.deleteUser(
-                                                            user.id);
-                                                      },
-                                                      text: "OK",
-                                                      textStyle: textTheme
-                                                          .displayMedium!,
-                                                    ).withBorder(
-                                                      context,
-                                                      borderRadius: 20,
-                                                      backgroundColor:
-                                                          Theme.of(context)
-                                                              .primaryColor,
-                                                    ),
-                                                  ],
-                                                )
-                                              ],
-                                            ));
-                                      },
-                                      icon: Icon(
-                                        FontAwesomeIcons.trash,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      iconSize: 25,
-                                      onPressed: () {
-                                        /* prController.setSelectedItem(item); */
-                                        crController.setEditUser(user);
-                                        adminUiController.changePageType(
-                                            PageType.addCustomer());
-                                      },
-                                      icon: Icon(
-                                        FontAwesomeIcons.pen,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                )),
-                              ]);
-                            }),
-                          );
-                        });
-                      });
-                })),
+                          )),
+                        ]);
+                      }),
+                    );
+                  }),
+                ),
               ],
             ),
           ),

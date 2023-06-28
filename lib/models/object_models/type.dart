@@ -1,7 +1,7 @@
 class ItemType {
   final String id;
   final String name;
-  final String dateTime;
+  final DateTime dateTime;
   final int order;
   final List? nameList;
   const ItemType({
@@ -21,7 +21,7 @@ class ItemType {
   factory ItemType.fromJson(Map<String, dynamic> json) => ItemType(
         id: json["id"],
         name: json["name"],
-        dateTime: json["dateTime"],
+        dateTime: DateTime.tryParse(json["dateTime"]) ?? DateTime.now(),
         order: json["order"],
         nameList: json["nameList"] ?? <String>[],
       );

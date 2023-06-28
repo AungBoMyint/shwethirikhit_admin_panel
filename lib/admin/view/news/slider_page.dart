@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pizza/admin/utils/widgets.dart';
 import 'package:pizza/models/object_models/category.dart';
 import 'package:pizza/service/reference.dart';
@@ -21,15 +22,39 @@ import '../../utils/space.dart';
 import '../../widgets/news/add_slider_form.dart';
 import 'item_page.dart';
 
-class SliderPage extends StatelessWidget {
+class SliderPage extends StatefulWidget {
   const SliderPage({super.key});
+
+  @override
+  State<SliderPage> createState() => _SliderPageState();
+}
+
+class _SliderPageState extends State<SliderPage> {
+  final NewsController newsController = Get.find();
+
+  late ScrollController scrollController;
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0);
+    newsController.setSliderScrollControllerListener(scrollController);
+    newsController.startGetCategories();
+    debugPrint("********************Slider Categories init***********");
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    debugPrint("********************Slider Categories dispose***********");
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final AdminUiController controller = Get.find();
-    final NewsController newsController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
@@ -175,187 +200,159 @@ class SliderPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<Category>(
-                      query: newsController.sliderQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final sliders = newsController.sliderCategories;
+                    final selectedAll = newsController.sliderSelectedAll.value;
+                    final selectedRow = newsController.sliderSelectedRow;
+                    if (newsController.sliderFetchLoading.value) {
+                      return loadingWidget();
+                    }
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                newsController.setSliderSelectedAll(sliders);
+                              } else {
+                                newsController.setSliderSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("****Error: ${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
+                          ),
+                          fixedWidth: 80,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
 
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setSliderSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll =
-                              newsController.sliderSelectedAll.value;
-                          final selectedRow = newsController.sliderSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                newsController.sliderScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 100,
+                        ),
+                      ],
+                      rows: List.generate(
+                        sliders.length,
+                        (index) {
+                          final item = sliders[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      newsController
-                                          .setSliderSelectedAll(snapshot.docs);
-                                    } else {
-                                      newsController.setSliderSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) =>
+                                      newsController.setSliderSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
                               ),
 
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
+                              DataCell(
+                                Text(
+                                  item.name,
+                                  style: bodyTextStyle,
                                 ),
-                                fixedWidth: 100,
                               ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => newsController
-                                            .setSliderSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
+                              //Out of Stock
+                              DataCell(Image.network(
+                                item.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
+
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () => delete(
+                                        categoryDocument(item.id),
+                                        "Slider deleting is successful.",
+                                        "Slider deleting is failed."),
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
                                     ),
-
-                                    DataCell(
-                                      Text(
-                                        item.name,
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Out of Stock
-                                    DataCell(Image.network(
-                                      item.image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete(
-                                              categoryDocument(item.id),
-                                              "Slider deleting is successful.",
-                                              "Slider deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.38,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child: AddSliderForm(
-                                                        width: width,
-                                                        newsController:
-                                                            newsController,
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        category: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.38,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child: AddSliderForm(
+                                                  width: width,
+                                                  newsController:
+                                                      newsController,
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  category: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),

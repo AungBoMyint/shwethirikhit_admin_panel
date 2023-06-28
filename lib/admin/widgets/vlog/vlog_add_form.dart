@@ -163,6 +163,7 @@ class _VlogAddFormState extends State<VlogAddForm> {
                         "Vlog Video uploading is successful.",
                         "Vlog Video uploading is failed.", () {
                       refresh();
+                      vlogController.vlogVideos.add(vlogVideo);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -181,8 +182,11 @@ class _VlogAddFormState extends State<VlogAddForm> {
                         vlogVideoDocument(vlogVideo.id),
                         vlogVideo,
                         "Vlog Video updating is successful.",
-                        "Vlog Video updating is failed.",
-                        () {});
+                        "Vlog Video updating is failed.", () {
+                      final index = vlogController.vlogVideos
+                          .indexWhere((e) => e.id == vlogVideo.id);
+                      vlogController.vlogVideos[index] = vlogVideo;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

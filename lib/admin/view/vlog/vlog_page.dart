@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -20,13 +18,36 @@ import '../../utils/func.dart';
 import '../../utils/space.dart';
 import '../../utils/widgets.dart';
 
-class VlogPage extends StatelessWidget {
+class VlogPage extends StatefulWidget {
   const VlogPage({super.key});
+
+  @override
+  State<VlogPage> createState() => _VlogPageState();
+}
+
+class _VlogPageState extends State<VlogPage> {
+  final VlogController vlogController = Get.find();
+
+  late ScrollController scrollController;
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0);
+    vlogController.setScrollListener(scrollController);
+    vlogController.startGetVlog();
+    debugPrint("***********VlogVideo init***************");
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AdminUiController controller = Get.find();
-    final VlogController vlogController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
@@ -164,207 +185,184 @@ class VlogPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<VlogVideo>(
-                      query: vlogController.vlogQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final vlogVideos = vlogController.vlogVideos;
+                    final selectedAll = vlogController.selectedAll.value;
+                    final selectedRow = vlogController.selectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                vlogController.setSelectedAll(vlogVideos);
+                              } else {
+                                vlogController.setSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
-
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          vlogController.setVlogSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll = vlogController.selectedAll.value;
-                          final selectedRow = vlogController.selectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController: vlogController.scrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                          ),
+                          fixedWidth: 80,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Video',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 135,
+                        ),
+                      ],
+                      rows: List.generate(
+                        vlogVideos.length,
+                        (index) {
+                          final item = vlogVideos[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      vlogController
-                                          .setSelectedAll(snapshot.docs);
-                                    } else {
-                                      vlogController.setSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) =>
+                                      vlogController.setSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
                               ),
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Video',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                fixedWidth: 135,
-                              ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) =>
-                                            vlogController.setSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
 
-                                    DataCell(
-                                      Text(
-                                        item.title,
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Total Items
-                                    DataCell(Image.network(
-                                      item.image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-                                    DataCell(
-                                      Text(
-                                        "${item.videoURL}",
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
+                              DataCell(
+                                Text(
+                                  item.title,
+                                  style: bodyTextStyle,
+                                ),
+                              ),
+                              //Total Items
+                              DataCell(Image.network(
+                                item.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
+                              DataCell(
+                                Text(
+                                  "${item.videoURL}",
+                                  style: bodyTextStyle,
+                                ),
+                              ),
 
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete<VlogVideo>(
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete<VlogVideo>(
                                               vlogVideoDocument(item.id),
                                               "Vlog Video deleting is successful.",
-                                              "Vlog Video deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            //TODO:Vlog View
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.eye,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            //TODO:Vlog Edit Form
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.6,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child: VlogAddForm(
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        vlogController:
-                                                            vlogController,
-                                                        vlogVideo: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                              "Vlog Video deleting is failed.")
+                                          .then((value) {
+                                        vlogController.vlogVideos.removeWhere(
+                                            (e) => e.id == item.id);
+                                      });
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      //TODO:Vlog View
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.eye,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      //TODO:Vlog Edit Form
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.6,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child: VlogAddForm(
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  vlogController:
+                                                      vlogController,
+                                                  vlogVideo: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -398,10 +396,14 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<VlogVideo>(
-          vlogController.selectedRow,
-          vlogVideoCollection(),
-        ),
+        onTap: () {
+          deleteItems<VlogVideo>(
+            vlogController.selectedRow,
+            vlogVideoCollection(),
+          ).then((value) {
+            vlogController.vlogVideos.clear();
+          });
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

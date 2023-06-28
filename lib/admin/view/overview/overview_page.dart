@@ -23,7 +23,7 @@ import '../../controller/overview_related_controller.dart';
 import '../../widgets/datacolumn_rowcontainer.dart';
 import '../../widgets/overview/onloading.dart';
 
-class OverviewPage extends GetView<AdminUiController> {
+class OverviewPage extends StatefulWidget {
   const OverviewPage({
     super.key,
     required this.verticalSpace,
@@ -38,9 +38,23 @@ class OverviewPage extends GetView<AdminUiController> {
   final TextTheme textTheme;
 
   @override
+  State<OverviewPage> createState() => _OverviewPageState();
+}
+
+class _OverviewPageState extends State<OverviewPage> {
+  final OverviewRelatedController orController = Get.find();
+
+  @override
+  void initState() {
+    orController.getAll();
+    debugPrint("*****************Overview init*******");
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final AdminUiController controller = Get.find();
     final AdminLoginController alController = Get.find();
-    final OverviewRelatedController orController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
@@ -74,194 +88,219 @@ class OverviewPage extends GetView<AdminUiController> {
                       ),
                     ),
                   ),
-                  verticalSpace(),
+                  widget.verticalSpace(),
                   //Container Row
                   Wrap(
                     children: [
-                      FirebaseSnapHelper<QuerySnapshot<Category>>(
-                        future: categoryCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "News Slider",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final newsCategories =
+                              orController.newsCategories.value!;
+                          return newsCategories.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "News Slider",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
-                      FirebaseSnapHelper<QuerySnapshot<ItemType>>(
-                        future: homeTypeCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "News Type",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final newsTypes = orController.newsTypes.value!;
+                          return newsTypes.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "News Type",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
-                      FirebaseSnapHelper<QuerySnapshot<ExpertModel>>(
-                        future: allExpertQuery().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "News Items",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final newsItems = orController.newsItems.value!;
+                          return newsItems.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "News Items",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Vlog
-                      FirebaseSnapHelper<QuerySnapshot<VlogVideo>>(
-                        future: vlogVideoCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Vlog Videos",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final vlogVideos = orController.vlogVideos.value!;
+                          return vlogVideos.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Vlog Videos",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Therapy Categories
-                      FirebaseSnapHelper<QuerySnapshot<Category>>(
-                        future: therapyCategoryCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
+                      Obx(() {
+                        final therapyCategories =
+                            orController.therapyCategories.value!;
+                        return therapyCategories.fold(
+                          (l) => onLoading(),
+                          (r) => DataColumnRowContainer(
+                            horizontalSpace: widget.horizontalSpace,
+                            verticalSpace: widget.verticalSpace,
                             topImageIcon: AdminIcon.news,
                             containerBackgroundColor:
                                 alController.isLightTheme.value
                                     ? const Color(0XFFCFF466)
                                     : Colors.black,
                             topData: "Therapy Categories",
-                            titleData: "${snap.docs.length}",
+                            titleData: "$r",
                             subTitleData: "",
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      }),
                       //Therapy Items
-                      FirebaseSnapHelper<QuerySnapshot<TherapyVideo>>(
-                        future: therapyVideoCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Therapy Videos",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final therapyVideos =
+                              orController.therapyVideos.value!;
+
+                          return therapyVideos.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Therapy Videos",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Affirmations Categories
-                      FirebaseSnapHelper<QuerySnapshot<Category>>(
-                        future: affirmationsCategoryCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Affirmations Categories",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final affirmationCategories =
+                              orController.affirmationsCategories.value!;
+                          return affirmationCategories.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Affirmations Categories",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Affirmations Type
-                      FirebaseSnapHelper<QuerySnapshot<ItemType>>(
-                        future: affirmationsTypeCollection().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Affirmations Type",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final affirmationTypes =
+                              orController.affirmationsTypes.value!;
+                          return affirmationTypes.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Affirmations Type",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Affirmations Items
-                      FirebaseSnapHelper<QuerySnapshot<Music>>(
-                        future: allAffirmationsMusicsQuery().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Affirmations Music",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final affirmationMusics =
+                              orController.affirmationsMusics.value!;
+                          return affirmationMusics.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Affirmations Music",
+                              titleData: "$r",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),
                       //Users
-                      FirebaseSnapHelper<QuerySnapshot<AuthUser>>(
-                        future: userCollectionReference().get(),
-                        onLoading: () => onLoading(),
-                        onSuccess: (snap) {
-                          return DataColumnRowContainer(
-                            horizontalSpace: horizontalSpace,
-                            verticalSpace: verticalSpace,
-                            topImageIcon: AdminIcon.news,
-                            containerBackgroundColor:
-                                alController.isLightTheme.value
-                                    ? const Color(0XFFCFF466)
-                                    : Colors.black,
-                            topData: "Total Users",
-                            titleData: "${snap.docs.length}",
-                            subTitleData: "",
+                      Obx(
+                        () {
+                          final users = orController.users.value!;
+                          return users.fold(
+                            (l) => onLoading(),
+                            (r) => DataColumnRowContainer(
+                              horizontalSpace: widget.horizontalSpace,
+                              verticalSpace: widget.verticalSpace,
+                              topImageIcon: AdminIcon.news,
+                              containerBackgroundColor:
+                                  alController.isLightTheme.value
+                                      ? const Color(0XFFCFF466)
+                                      : Colors.black,
+                              topData: "Total Users",
+                              titleData: "$r O",
+                              subTitleData: "",
+                            ),
                           );
                         },
                       ),

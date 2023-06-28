@@ -22,15 +22,38 @@ import '../../utils/space.dart';
 import '../../widgets/affirmations/add_affirmations_category_form.dart';
 import '../../widgets/news/add_slider_form.dart';
 
-class AffirmationsCategoriesPage extends StatelessWidget {
+class AffirmationsCategoriesPage extends StatefulWidget {
   const AffirmationsCategoriesPage({super.key});
+
+  @override
+  State<AffirmationsCategoriesPage> createState() =>
+      _AffirmationsCategoriesPageState();
+}
+
+class _AffirmationsCategoriesPageState
+    extends State<AffirmationsCategoriesPage> {
+  final AffirmationsController affirmationsController = Get.find();
+  late ScrollController scrollController;
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0.0);
+    affirmationsController.setCategoryScrollController(scrollController);
+    affirmationsController.startGetCategories();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final AdminUiController controller = Get.find();
-    final AffirmationsController affirmationsController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
@@ -178,191 +201,170 @@ class AffirmationsCategoriesPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<Category>(
-                      query: affirmationsController.sliderQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final categories = affirmationsController.categories;
+                    final selectedAll =
+                        affirmationsController.sliderSelectedAll.value;
+                    final selectedRow =
+                        affirmationsController.sliderSelectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => affirmationsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                affirmationsController
+                                    .setSliderSelectedAll(categories);
+                              } else {
+                                affirmationsController
+                                    .setSliderSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("****Error: ${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
+                          ),
+                          fixedWidth: 80,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
 
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          affirmationsController.setSliderSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll =
-                              affirmationsController.sliderSelectedAll.value;
-                          final selectedRow =
-                              affirmationsController.sliderSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                affirmationsController.sliderScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => affirmationsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 100,
+                        ),
+                      ],
+                      rows: List.generate(
+                        categories.length,
+                        (index) {
+                          final item = categories[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      affirmationsController
-                                          .setSliderSelectedAll(snapshot.docs);
-                                    } else {
-                                      affirmationsController
-                                          .setSliderSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) => affirmationsController
+                                      .setSliderSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
                               ),
 
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
+                              DataCell(
+                                Text(
+                                  item.name,
+                                  style: bodyTextStyle,
                                 ),
-                                fixedWidth: 100,
                               ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => affirmationsController
-                                            .setSliderSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
+                              //Out of Stock
+                              DataCell(Image.network(
+                                item.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
 
-                                    DataCell(
-                                      Text(
-                                        item.name,
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Out of Stock
-                                    DataCell(Image.network(
-                                      item.image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete(
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete(
                                               affirmationsCategoryDocument(
                                                   item.id),
                                               "Category deleting is successful.",
-                                              "Category deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.38,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child:
-                                                          AddAffirmationsCategoryForm(
-                                                        width: width,
-                                                        affirmationsController:
-                                                            affirmationsController,
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        category: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                              "Category deleting is failed.")
+                                          .then(
+                                        (value) => affirmationsController
+                                            .categories
+                                            .removeWhere(
+                                                (e) => e.id == item.id),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.38,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child:
+                                                    AddAffirmationsCategoryForm(
+                                                  width: width,
+                                                  affirmationsController:
+                                                      affirmationsController,
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  category: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -396,10 +398,14 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<Category>(
-          affirmationsController.sliderSelectedRow,
-          affirmationsCategoryCollection(),
-        ),
+        onTap: () {
+          deleteItems<Category>(
+            affirmationsController.sliderSelectedRow,
+            affirmationsCategoryCollection(),
+          ).then((value) {
+            affirmationsController.categories.clear();
+          });
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

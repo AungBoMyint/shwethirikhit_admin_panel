@@ -15,7 +15,6 @@ import '../../constant/data.dart';
 import '../../core/firebase_reference.dart';
 import '../../models/auth_user.dart';
 import '../../models/customer_role.dart';
-import '../../models/page_type.dart';
 import '../../service/database.dart';
 import '../utils/debouncer.dart';
 import '../utils/func.dart';
@@ -27,46 +26,53 @@ class CustomerRelatedController extends GetxController {
   final box = Hive.box(loginBox);
   final AdminLoginController alController = Get.find();
   final AdminUiController adminUiController = Get.find();
-  late Rxn<Query<AuthUser>> userQuery;
+  Rxn<Query<AuthUser>> userQuery = Rxn<Query<AuthUser>>();
   final debouncer = Debouncer(milliseconds: 800);
-  final ScrollController scrollController =
-      ScrollController(initialScrollOffset: 0);
+  RxList<AuthUser> users = <AuthUser>[].obs;
   TextEditingController searchController = TextEditingController();
-  Rxn<FirestoreQueryBuilderSnapshot<AuthUser>> snapshot =
-      Rxn<FirestoreQueryBuilderSnapshot<AuthUser>>();
+
   Rxn<AuthUser> editUser = Rxn<AuthUser>(null);
   SingleValueDropDownController ageController = SingleValueDropDownController();
   RxList<String> multiSelectedItems = <String>[].obs;
   void startSearch() {
     if (searchController.text.isNotEmpty) {
-      userQuery.value = userCollectionReference()
-          .where("id", isNotEqualTo: alController.currentUser.value!.id)
-          .where("nameList",
-              arrayContains: searchController.text.toLowerCase());
+      getUsers(allUsersExceptCurrentQuery().where("nameList",
+          arrayContains: searchController.text.toLowerCase()));
     } else {
-      userQuery.value = allUsersExceptCurrentQuery();
+      getUsers(allUsersExceptCurrentQuery());
     }
   }
-
-  void setSnapshot(FirestoreQueryBuilderSnapshot<AuthUser> v) =>
-      snapshot.value = v;
 
   allUsersExceptCurrentQuery() => userCollectionReference()
       .where("id", isNotEqualTo: box.get(userIdKey))
       .orderBy("id")
-      .orderBy("name");
-  @override
-  void onInit() {
-    userQuery = Rxn<Query<AuthUser>>(allUsersExceptCurrentQuery());
-    scrollController.addListener(() {
-      if (scrollController.position.pixels ==
-          scrollController.position.maxScrollExtent) {
-        if (!(snapshot.value == null) && snapshot.value!.hasMore) {
-          snapshot.value!.fetchMore();
-        }
+      .orderBy("name")
+      .orderBy("email")
+      .limit(10);
+
+  void setScrollListener(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        allUsersExceptCurrentQuery()
+            .startAfter([users.last.id, users.last.email])
+            .get()
+            .then((value) {
+              users.addAll(value.docs.map((e) => e.data()).toList());
+            });
       }
     });
-    super.onInit();
+  }
+
+  void startGetUsers() {
+    if (users.isEmpty) {
+      getUsers(allUsersExceptCurrentQuery());
+    }
+  }
+
+  Future<void> getUsers(Query<AuthUser> query) async {
+    userQuery.value = query;
+    final value = await query.get();
+    users.value = value.docs.map((e) => e.data()).toList();
   }
 
   //---------------------For Adding Customer-----------------
@@ -203,6 +209,7 @@ class CustomerRelatedController extends GetxController {
           nameList: subName,
         );
         await userDocumentReference(authUser.id).set(authUser);
+        users.add(authUser);
         hideLoading(Get.context!);
         reset();
         successSnap("Success", message: "User Adding is successful");
@@ -270,6 +277,8 @@ class CustomerRelatedController extends GetxController {
       }
 
       await userDocumentReference(updateUser.id).set(updateUser);
+      final index = users.indexWhere((element) => element.id == updateUser.id);
+      users[index] = updateUser;
       hideLoading(Get.context!);
       successSnap("Success", message: "User Updating is successful");
     } else {

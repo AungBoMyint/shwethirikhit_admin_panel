@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -25,13 +24,34 @@ import '../../utils/space.dart';
 import '../../utils/widgets.dart';
 import '../../widgets/affirmations/add_music_form.dart';
 
-class AffirmationsItemsPage extends StatelessWidget {
+class AffirmationsItemsPage extends StatefulWidget {
   const AffirmationsItemsPage({super.key});
+
+  @override
+  State<AffirmationsItemsPage> createState() => _AffirmationsItemsPageState();
+}
+
+class _AffirmationsItemsPageState extends State<AffirmationsItemsPage> {
+  late ScrollController scrollController;
+  final AffirmationsController newsController = Get.find();
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 0.0);
+    newsController.setItemScrollControllerListener(scrollController);
+    newsController.startGetItems();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AdminUiController controller = Get.find();
-    final AffirmationsController newsController = Get.find();
     final textTheme = Theme.of(context).textTheme;
     final titleTextStyle = textTheme.displayMedium?.copyWith(fontSize: 22);
     final bodyTextStyle = textTheme.displayMedium;
@@ -169,205 +189,181 @@ class AffirmationsItemsPage extends StatelessWidget {
                 ),
                 //Table
                 const Divider(),
-                Expanded(child: Obx(() {
-                  return FirestoreQueryBuilder<Music>(
-                      query: newsController.itemsQuery.value!,
-                      pageSize: 15,
-                      builder: (context, snapshot, _) {
-                        if (snapshot.isFetching) {
-                          return const Center(
-                            child: SizedBox(
-                              height: 50,
-                              width: 50,
-                              child: CircularProgressIndicator(),
+                Expanded(
+                  child: Obx(() {
+                    final musics = newsController.musics;
+                    final selectedAll = newsController.itemsSelectedAll.value;
+                    final selectedRow = newsController.itemsSelectedRow;
+                    return DataTable2(
+                      showCheckboxColumn: true,
+                      scrollController: scrollController,
+                      columnSpacing: 20,
+                      horizontalMargin: 20,
+                      minWidth: 600,
+                      /* onSelectAll: (v) => newsController.setSli, */
+                      columns: [
+                        DataColumn2(
+                          label: Checkbox(
+                            value: selectedAll,
+                            activeColor: Theme.of(context).primaryColor,
+                            onChanged: (_) {
+                              if (!selectedAll) {
+                                newsController.setItemsSelectedAll(musics);
+                              } else {
+                                newsController.setItemsSelectedAll(null);
+                              }
+                            },
+                            side: BorderSide(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          debugPrint("${snapshot.error}");
-                          return Text(
-                              'Something went wrong! ${snapshot.error}');
-                        }
+                          ),
+                          fixedWidth: 80,
+                        ),
 
-                        if (snapshot.hasData && snapshot.docs.isNotEmpty) {
-                          newsController.setItemsSnapshot(snapshot);
-                        }
-
-                        return Obx(() {
-                          final selectedAll =
-                              newsController.itemsSelectedAll.value;
-                          final selectedRow = newsController.itemsSelectedRow;
-                          return DataTable2(
-                            showCheckboxColumn: true,
-                            scrollController:
-                                newsController.itemScrollController,
-                            columnSpacing: 20,
-                            horizontalMargin: 20,
-                            minWidth: 600,
-                            /* onSelectAll: (v) => newsController.setSli, */
-                            columns: [
-                              DataColumn2(
-                                label: Checkbox(
-                                  value: selectedAll,
+                        DataColumn(
+                          label: Text(
+                            'Name',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Out of stock
+                        DataColumn2(
+                          label: Text(
+                            'Image',
+                            style: titleTextStyle,
+                          ),
+                          size: ColumnSize.L,
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Music',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Category
+                        DataColumn(
+                          label: Text(
+                            'Category',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        //Type
+                        DataColumn(
+                          label: Text(
+                            'Type',
+                            style: titleTextStyle,
+                          ),
+                        ),
+                        DataColumn2(
+                          label: Text(
+                            'Actions',
+                            style: titleTextStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          fixedWidth: 135,
+                        ),
+                      ],
+                      rows: List.generate(
+                        musics.length,
+                        (index) {
+                          final item = musics[index];
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Checkbox(
                                   activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (_) {
-                                    if (!selectedAll) {
-                                      newsController
-                                          .setItemsSelectedAll(snapshot.docs);
-                                    } else {
-                                      newsController.setItemsSelectedAll(null);
-                                    }
-                                  },
-                                  side: BorderSide(
+                                  value: selectedRow.contains(item.id),
+                                  onChanged: (_) =>
+                                      newsController.setItemsSelectedRow(item),
+                                  side: const BorderSide(
                                     color: Colors.black,
-                                    width: 2,
+                                    width: 1.5,
                                   ),
                                 ),
-                                fixedWidth: 80,
                               ),
-
-                              DataColumn(
-                                label: Text(
-                                  'Name',
-                                  style: titleTextStyle,
+                              DataCell(
+                                Text(
+                                  item.name,
+                                  style: bodyTextStyle,
                                 ),
                               ),
-                              //Out of stock
-                              DataColumn2(
-                                label: Text(
-                                  'Image',
-                                  style: titleTextStyle,
-                                ),
-                                size: ColumnSize.L,
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Music',
-                                  style: titleTextStyle,
+                              DataCell(Image.network(
+                                item.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )),
+                              DataCell(
+                                Text(
+                                  item.audioURL,
+                                  style: bodyTextStyle,
                                 ),
                               ),
                               //Category
-                              DataColumn(
-                                label: Text(
-                                  'Category',
-                                  style: titleTextStyle,
-                                ),
-                              ),
+                              DataCell(FutureBuilder<
+                                      DocumentSnapshot<Category>>(
+                                  future: affirmationsCategoryDocument(
+                                          item.categoryID)
+                                      .get(),
+                                  builder: (context,
+                                      AsyncSnapshot<DocumentSnapshot<Category>>
+                                          snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(
+                                        "${snapshot.data?.data()?.name}",
+                                        style: bodyTextStyle,
+                                        maxLines: 3,
+                                      );
+                                    }
+                                    return Text(
+                                      "0",
+                                      style: bodyTextStyle,
+                                      maxLines: 3,
+                                    );
+                                  })),
                               //Type
-                              DataColumn(
-                                label: Text(
-                                  'Type',
-                                  style: titleTextStyle,
-                                ),
-                              ),
-                              DataColumn2(
-                                label: Text(
-                                  'Actions',
-                                  style: titleTextStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                fixedWidth: 135,
-                              ),
-                            ],
-                            rows: List.generate(
-                              snapshot.docs.length,
-                              (index) {
-                                final item = snapshot.docs[index].data();
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Checkbox(
-                                        activeColor:
-                                            Theme.of(context).primaryColor,
-                                        value: selectedRow.contains(item.id),
-                                        onChanged: (_) => newsController
-                                            .setItemsSelectedRow(item),
-                                        side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Text(
-                                        item.name,
+                              DataCell(FutureBuilder<
+                                      DocumentSnapshot<ItemType>>(
+                                  future:
+                                      affirmationsTypeDocument(item.type).get(),
+                                  builder: (context,
+                                      AsyncSnapshot<DocumentSnapshot<ItemType>>
+                                          snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(
+                                        "${snapshot.data?.data()?.name}",
                                         style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    DataCell(Image.network(
-                                      item.image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    )),
-                                    DataCell(
-                                      Text(
-                                        item.audioURL,
-                                        style: bodyTextStyle,
-                                      ),
-                                    ),
-                                    //Category
-                                    DataCell(FutureBuilder<
-                                            DocumentSnapshot<Category>>(
-                                        future: affirmationsCategoryDocument(
-                                                item.categoryID)
-                                            .get(),
-                                        builder: (context,
-                                            AsyncSnapshot<
-                                                    DocumentSnapshot<Category>>
-                                                snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data?.data()?.name}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
-                                    //Type
-                                    DataCell(FutureBuilder<
-                                            DocumentSnapshot<ItemType>>(
-                                        future:
-                                            affirmationsTypeDocument(item.type)
-                                                .get(),
-                                        builder: (context,
-                                            AsyncSnapshot<
-                                                    DocumentSnapshot<ItemType>>
-                                                snapshot) {
-                                          if (snapshot.hasData) {
-                                            return Text(
-                                              "${snapshot.data?.data()?.name}",
-                                              style: bodyTextStyle,
-                                              maxLines: 3,
-                                            );
-                                          }
-                                          return Text(
-                                            "0",
-                                            style: bodyTextStyle,
-                                            maxLines: 3,
-                                          );
-                                        })),
-                                    DataCell(Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () => delete<Music>(
+                                        maxLines: 3,
+                                      );
+                                    }
+                                    return Text(
+                                      "0",
+                                      style: bodyTextStyle,
+                                      maxLines: 3,
+                                    );
+                                  })),
+                              DataCell(Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      delete<Music>(
                                               musicDocument(item.id),
                                               "Item deleting is successful.",
-                                              "Item deleting is failed."),
-                                          icon: Icon(
-                                            FontAwesomeIcons.trash,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        /* IconButton(
+                                              "Item deleting is failed.")
+                                          .then((value) {
+                                        newsController.musics.removeWhere(
+                                            (element) => element.id == item.id);
+                                      });
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.trash,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  /* IconButton(
                                           iconSize: 25,
                                           onPressed: () {
                                             //TODO:VIEW ITEM
@@ -377,58 +373,54 @@ class AffirmationsItemsPage extends StatelessWidget {
                                             color: Colors.grey.shade600,
                                           ),
                                         ), */
-                                        IconButton(
-                                          iconSize: 25,
-                                          onPressed: () {
-                                            //TODO:EDIT MUSIC
-                                            Get.dialog(
-                                              Center(
-                                                child: SizedBox(
-                                                  height: size.height * 0.7,
-                                                  width: size.width * 0.5,
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                20)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                        left: 20,
-                                                        right: 20,
-                                                        top: 20,
-                                                        bottom: 10,
-                                                      ),
-                                                      child: AddMusicForm(
-                                                        dropDownBorder:
-                                                            dropDownBorder(),
-                                                        therapyController:
-                                                            newsController,
-                                                        music: item,
-                                                      ),
-                                                    ),
-                                                  ),
+                                  IconButton(
+                                    iconSize: 25,
+                                    onPressed: () {
+                                      //TODO:EDIT MUSIC
+                                      Get.dialog(
+                                        Center(
+                                          child: SizedBox(
+                                            height: size.height * 0.7,
+                                            width: size.width * 0.5,
+                                            child: Material(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(20)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 20,
+                                                  bottom: 10,
+                                                ),
+                                                child: AddMusicForm(
+                                                  dropDownBorder:
+                                                      dropDownBorder(),
+                                                  therapyController:
+                                                      newsController,
+                                                  music: item,
                                                 ),
                                               ),
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.2),
-                                            );
-                                          },
-                                          icon: Icon(
-                                            FontAwesomeIcons.pen,
-                                            color: Colors.grey.shade600,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    )),
-                                  ],
-                                );
-                              },
-                            ),
+                                        barrierColor:
+                                            Colors.black.withOpacity(0.2),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.pen,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                            ],
                           );
-                        });
-                      });
-                })),
+                        },
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -462,10 +454,12 @@ void showPopupMenu(BuildContext context, Offset position) async {
     items: [
       PopupMenuItem(
         value: 'delete',
-        onTap: () => deleteItems<Music>(
-          prController.itemsSelectedRow,
-          musicCollection(),
-        ),
+        onTap: () {
+          deleteItems<Music>(
+            prController.itemsSelectedRow,
+            musicCollection(),
+          ).then((value) => prController.musics.clear());
+        },
         child: Text(
           "Delete",
           style: textTheme.displayMedium?.copyWith(

@@ -52,6 +52,7 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
 
   @override
   Widget build(BuildContext context) {
+    final TherapyController therapyController = Get.find();
     return Form(
       key: formKey,
       child: SingleChildScrollView(
@@ -111,6 +112,7 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
                         nameTextController.clear();
                         imageTextController.clear();
                       });
+                      therapyController.categories.add(category);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -128,8 +130,11 @@ class _AddCategoryFormState extends State<AddCategoryForm> {
                         therapyCategoryDocument(category.id),
                         category,
                         "Category updating is successful.",
-                        "Category updating is failed.",
-                        () {});
+                        "Category updating is failed.", () {
+                      final index = therapyController.categories
+                          .indexWhere((e) => e.id == category.id);
+                      therapyController.categories[index] = category;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

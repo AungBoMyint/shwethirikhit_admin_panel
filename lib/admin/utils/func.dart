@@ -193,9 +193,10 @@ Future<void> delete<T>(
   }
 }
 
-void deleteItems<T>(List<String> idList, CollectionReference<T> reference) {
+Future<void> deleteItems<T>(
+    List<String> idList, CollectionReference<T> reference) async {
   if (idList.isNotEmpty) {
-    deleteItemsWithBatch(idList, reference);
+    await deleteItemsWithBatch(idList, reference);
   }
 }
 

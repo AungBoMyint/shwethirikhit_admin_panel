@@ -231,6 +231,7 @@ class _AddMusicFormState extends State<AddMusicForm> {
                         "Music uploading is successful.",
                         "Music uploading is failed.", () {
                       refresh();
+                      widget.therapyController.musics.add(therapyVideo);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -251,8 +252,11 @@ class _AddMusicFormState extends State<AddMusicForm> {
                         musicDocument(therapyVideo.id),
                         therapyVideo,
                         "Music updating is successful.",
-                        "Music updating is failed.",
-                        () {});
+                        "Music updating is failed.", () {
+                      final index = widget.therapyController.musics.indexWhere(
+                          (element) => element.id == therapyVideo.id);
+                      widget.therapyController.musics[index] = therapyVideo;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

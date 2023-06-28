@@ -84,7 +84,7 @@ class _AddAffirmationsTypeFormState extends State<AddAffirmationsTypeForm> {
                     final itemType = ItemType(
                       id: Uuid().v1(),
                       name: nameTextController.text,
-                      dateTime: DateTime.now().toIso8601String(),
+                      dateTime: DateTime.now(),
                       order: 0,
                       nameList: subName,
                     );
@@ -96,6 +96,7 @@ class _AddAffirmationsTypeFormState extends State<AddAffirmationsTypeForm> {
                       setState(() {
                         nameTextController.clear();
                       });
+                      widget.newsController.types.add(itemType);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -111,8 +112,11 @@ class _AddAffirmationsTypeFormState extends State<AddAffirmationsTypeForm> {
                         affirmationsTypeDocument(itemType.id),
                         itemType,
                         "Type updating is successful.",
-                        "Type updating is failed.",
-                        () {});
+                        "Type updating is failed.", () {
+                      final index = widget.newsController.types
+                          .indexWhere((element) => element.id == itemType.id);
+                      widget.newsController.types[index] = itemType;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

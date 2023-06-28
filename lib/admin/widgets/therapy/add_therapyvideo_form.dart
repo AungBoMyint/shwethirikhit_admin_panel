@@ -158,57 +158,34 @@ class _AddTherapyVideoFormState extends State<AddTherapyVideoForm> {
               );
             }),
             verticalSpace(),
-            readOnlyMode
-                ? FirebaseSnapHelper<DocumentSnapshot<Category>>(
-                    future:
-                        therapyCategoryDocument(widget.therapyVideo?.id ?? "")
-                            .get(),
-                    onSuccess: (snapshot) {
-                      final item = snapshot.data();
-                      return TextFormField(
-                        validator: (v) => stringValidator("Category", v),
-                        initialValue: item?.name ?? "",
-                        readOnly: readOnlyMode,
-                        decoration: InputDecoration(
-                          border: dropDownBorder(),
-                          disabledBorder: dropDownBorder(),
-                          focusedBorder: dropDownBorder(),
-                          enabledBorder: dropDownBorder(),
-                          labelText: "Select Category",
-                          floatingLabelBehavior: FloatingLabelBehavior.always,
-                        ),
-                      );
-                    },
-                  )
-                : FirebaseSnapHelper<QuerySnapshot<Category>>(
-                    future: therapyCategoryCollection().get(),
-                    onSuccess: (snapshot) {
-                      final itemsList = snapshot.docs;
-                      return DropDownTextField(
-                        controller: _categoryController,
-                        clearOption: true,
-                        readOnly: readOnlyMode,
-                        textFieldDecoration: InputDecoration(
-                          border: dropDownBorder(),
-                          disabledBorder: dropDownBorder(),
-                          focusedBorder: dropDownBorder(),
-                          enabledBorder: dropDownBorder(),
-                          labelText: "Select Category",
-                          floatingLabelBehavior: FloatingLabelBehavior.always,
-                        ),
-                        validator: (value) =>
-                            stringValidator("Category", value),
-                        dropDownItemCount: itemsList.length,
-                        dropDownList: itemsList
-                            .map((e) => DropDownValueModel(
-                                  name: e.data().name,
-                                  value: e.data().id,
-                                ))
-                            .toList(),
-                        onChanged: (val) {},
-                      );
-                    },
+            FirebaseSnapHelper<QuerySnapshot<Category>>(
+              future: therapyCategoryCollection().get(),
+              onSuccess: (snapshot) {
+                final itemsList = snapshot.docs;
+                return DropDownTextField(
+                  controller: _categoryController,
+                  clearOption: true,
+                  readOnly: readOnlyMode,
+                  textFieldDecoration: InputDecoration(
+                    border: dropDownBorder(),
+                    disabledBorder: dropDownBorder(),
+                    focusedBorder: dropDownBorder(),
+                    enabledBorder: dropDownBorder(),
+                    labelText: "Select Category",
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
                   ),
+                  validator: (value) => stringValidator("Category", value),
+                  dropDownItemCount: itemsList.length,
+                  dropDownList: itemsList
+                      .map((e) => DropDownValueModel(
+                            name: e.data().name,
+                            value: e.data().id,
+                          ))
+                      .toList(),
+                  onChanged: (val) {},
+                );
+              },
+            ),
             verticalSpace(),
             ElevatedButton(
               onPressed: () {
@@ -238,6 +215,7 @@ class _AddTherapyVideoFormState extends State<AddTherapyVideoForm> {
                         "Therapy Video uploading is successful.",
                         "Therapy Video uploading is failed.", () {
                       refresh();
+                      therapyController.therapyVideos.add(therapyVideo);
                     });
 
                     debugPrint("******Uploading...Slider");
@@ -257,8 +235,11 @@ class _AddTherapyVideoFormState extends State<AddTherapyVideoForm> {
                         therapyVideoDocument(therapyVideo.id),
                         therapyVideo,
                         "Therapy Video updating is successful.",
-                        "Therapy Video updating is failed.",
-                        () {});
+                        "Therapy Video updating is failed.", () {
+                      final index = therapyController.therapyVideos
+                          .indexWhere((e) => e.id == therapyVideo.id);
+                      therapyController.therapyVideos[index] = therapyVideo;
+                    });
 
                     debugPrint("******Uploading...Slider");
                   }

@@ -1,9 +1,9 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterfire_ui/firestore.dart';
 import 'package:get/get.dart';
-import '../../models/object_models/category.dart';
+import '../../models/object_models/category.dart' as app;
 import '../../models/object_models/expert.dart';
 import '../../models/object_models/type.dart';
 import '../../service/query.dart';
@@ -13,21 +13,26 @@ class NewsController extends GetxController {
   Either<ExpertModel, ExpertModel?> selectedExpertItem = right(null);
   //Left refer to View
   //Right refer to Upload,Update
-  Rxn<Query<Category>> sliderQuery = Rxn<Query<Category>>(homeCategoryQuery);
-  Rxn<Query<ItemType>> typeQuery = Rxn<Query<ItemType>>(homeTypeQuery);
-  Rxn<Query<ExpertModel>> itemsQuery =
-      Rxn<Query<ExpertModel>>(allExpertQuery());
+  RxList<app.Category> sliderCategories = <app.Category>[].obs;
+  RxList<ItemType> types = <ItemType>[].obs;
+  RxList<ExpertModel> expertModels = <ExpertModel>[].obs;
+  RxList<app.Category> searchSliderCategories = <app.Category>[].obs;
+  RxList<ItemType> searchTypes = <ItemType>[].obs;
+  RxList<ExpertModel> searchExpertModels = <ExpertModel>[].obs;
+  Rxn<Query<app.Category>> sliderQuery = Rxn<Query<app.Category>>();
+  Rxn<Query<ItemType>> typeQuery = Rxn<Query<ItemType>>();
+  Rxn<Query<ExpertModel>> itemsQuery = Rxn<Query<ExpertModel>>();
   final debouncer = Debouncer(milliseconds: 800);
-  FirestoreQueryBuilderSnapshot<Category>? sliderSnapshot;
+  /* FirestoreQueryBuilderSnapshot<Category>? sliderSnapshot;
   FirestoreQueryBuilderSnapshot<ItemType>? typeSnapshot;
-  FirestoreQueryBuilderSnapshot<ExpertModel>? itemsSnapshot;
+  FirestoreQueryBuilderSnapshot<ExpertModel>? itemsSnapshot; */
 
-  final ScrollController sliderScrollController =
-      ScrollController(initialScrollOffset: 0);
-  final ScrollController typeScrollController =
-      ScrollController(initialScrollOffset: 0);
-  final ScrollController itemScrollController =
-      ScrollController(initialScrollOffset: 0);
+  var sliderScrollLoading = false.obs;
+  var typeScrollLoading = false.obs;
+  var itemsScrollLoading = false.obs;
+  var sliderFetchLoading = false.obs;
+  var typeFetchLoading = false.obs;
+  var itemsFetchLoading = false.obs;
 
   RxList<String> sliderSelectedRow = <String>[].obs;
   RxList<String> typeSelectedRow = <String>[].obs;
@@ -41,39 +46,32 @@ class NewsController extends GetxController {
 
   void startSliderSearch(String value) {
     if (value.isNotEmpty) {
-      sliderQuery.value = homeCategoryQuery.where("nameList",
-          arrayContains: value.toLowerCase());
+      getCategories(homeCategoryQuery.where("nameList",
+          arrayContains: value.toLowerCase()));
     } else {
-      sliderQuery.value = homeCategoryQuery;
+      getCategories(homeCategoryQuery);
     }
   }
 
   void startTypeSearch(String value) {
     if (value.isNotEmpty) {
-      typeQuery.value =
-          homeTypeQuery.where("nameList", arrayContains: value.toLowerCase());
+      getTypes(
+          homeTypeQuery.where("nameList", arrayContains: value.toLowerCase()));
     } else {
-      typeQuery.value = homeTypeQuery;
+      getTypes(homeTypeQuery);
     }
   }
 
   void startItemSearch(String value) {
     if (value.isNotEmpty) {
-      itemsQuery.value = allExpertQuery()
-          .where("nameList", arrayContains: value.toLowerCase());
+      getItems(allExpertQuery()
+          .where("nameList", arrayContains: value.toLowerCase()));
     } else {
-      itemsQuery.value = allExpertQuery();
+      getItems(allExpertQuery());
     }
   }
 
-  void setSliderSnapshot(FirestoreQueryBuilderSnapshot<Category> v) =>
-      sliderSnapshot = v;
-  void setTypeSnapshot(FirestoreQueryBuilderSnapshot<ItemType> v) =>
-      typeSnapshot = v;
-  void setItemsSnapshot(FirestoreQueryBuilderSnapshot<ExpertModel> v) =>
-      itemsSnapshot = v;
-
-  void setSliderSelectedRow(Category item) {
+  void setSliderSelectedRow(app.Category item) {
     if (sliderSelectedRow.contains(item.id)) {
       sliderSelectedRow.remove(item.id);
     } else {
@@ -97,50 +95,129 @@ class NewsController extends GetxController {
     }
   }
 
-  void setSliderSelectedAll(List<QueryDocumentSnapshot<Category>>? items) {
-    sliderSelectedAll.value = items == null ? false : true;
+  void setSliderSelectedAll(List<app.Category>? value) {
+    sliderSelectedAll.value = value == null ? false : true;
     sliderSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id).toList();
+        value == null ? [] : value.map((e) => e.id).toList();
   }
 
-  void setTypeSelectedAll(List<QueryDocumentSnapshot<ItemType>>? items) {
+  void setTypeSelectedAll(List<ItemType>? items) {
     typeSelectedAll.value = items == null ? false : true;
     typeSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id).toList();
+        items == null ? [] : items.map((e) => e.id).toList();
   }
 
-  void setItemsSelectedAll(List<QueryDocumentSnapshot<ExpertModel>>? items) {
+  void setItemsSelectedAll(List<ExpertModel>? items) {
     itemsSelectedAll.value = items == null ? false : true;
     itemsSelectedRow.value =
-        items == null ? [] : items.map((e) => e.data().id!).toList();
+        items == null ? [] : items.map((e) => e.id!).toList();
   }
 
-  @override
-  void onInit() {
-    sliderScrollController.addListener(() {
-      if (sliderScrollController.position.pixels ==
-          sliderScrollController.position.maxScrollExtent) {
-        if (!(sliderSnapshot == null) && sliderSnapshot!.hasMore) {
-          sliderSnapshot!.fetchMore();
+  Future<void> getCategories(Query<app.Category> query) async {
+    sliderQuery.value = query;
+    sliderFetchLoading.value = true;
+    final value = await query.get();
+    sliderCategories.value = value.docs.map((e) => e.data()).toList();
+    sliderFetchLoading.value = false;
+  }
+
+  Future<void> getTypes(Query<ItemType> query) async {
+    typeQuery.value = query;
+    typeFetchLoading.value = true;
+    final value = await query.get();
+    types.value = value.docs.map((e) => e.data()).toList();
+    typeFetchLoading.value = false;
+  }
+
+  Future<void> getItems(Query<ExpertModel> query) async {
+    itemsQuery.value = query;
+    itemsFetchLoading.value = true;
+    final value = await query.get();
+    expertModels.value = value.docs.map((e) => e.data()).toList();
+    itemsFetchLoading.value = false;
+  }
+
+  void setSliderScrollControllerListener(ScrollController scrollController) {
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        if (!(sliderScrollLoading.value)) {
+          sliderScrollLoading.value = true;
+          debugPrint(
+              "************Slider Categories Pagination are fetching......");
+          homeCategoryQuery
+              .startAfter([sliderCategories.last.dateTime.toIso8601String()])
+              .get()
+              .then((value) {
+                sliderCategories
+                    .addAll(value.docs.map((e) => e.data()).toList());
+                sliderScrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
         }
       }
     });
-    typeScrollController.addListener(() {
-      if (typeScrollController.position.pixels ==
-          typeScrollController.position.maxScrollExtent) {
-        if (!(typeSnapshot == null) && typeSnapshot!.hasMore) {
-          typeSnapshot!.fetchMore();
+  }
+
+  void setTypeScrollControllerListener(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        if (!(typeScrollLoading.value)) {
+          typeScrollLoading.value = true;
+          debugPrint("************News Types Pagination are fetching......");
+          homeTypeQuery
+              .startAfter([types.last.dateTime.toIso8601String()])
+              .get()
+              .then((value) {
+                types.addAll(value.docs.map((e) => e.data()).toList());
+                typeScrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
         }
       }
     });
-    itemScrollController.addListener(() {
-      if (itemScrollController.position.pixels ==
-          itemScrollController.position.maxScrollExtent) {
-        if (!(itemsSnapshot == null) && itemsSnapshot!.hasMore) {
-          itemsSnapshot!.fetchMore();
+  }
+
+  void setItemScrollControllerListener(ScrollController scroll) {
+    scroll.addListener(() {
+      if (scroll.position.pixels == scroll.position.maxScrollExtent) {
+        if (!(itemsScrollLoading.value)) {
+          itemsScrollLoading.value = true;
+          debugPrint("************ExpertModels Pagination are fetching......");
+          allExpertQuery()
+              .startAfter([expertModels.last.dateTime?.toIso8601String()])
+              .get()
+              .then((value) {
+                expertModels.addAll(value.docs.map((e) => e.data()).toList());
+                itemsScrollLoading.value = false;
+              })
+              .onError((error, stackTrace) {
+                debugPrint("$error");
+              });
         }
       }
     });
-    super.onInit();
+  }
+
+  Future<void> startGetCategories() async {
+    if (sliderCategories.isEmpty) {
+      await getCategories(homeCategoryQuery);
+    }
+  }
+
+  Future<void> startGetTypes() async {
+    if (types.isEmpty) {
+      await getTypes(homeTypeQuery);
+    }
+  }
+
+  Future<void> startGetItems() async {
+    if (expertModels.isEmpty) {
+      await getItems(allExpertQuery());
+    }
   }
 }
