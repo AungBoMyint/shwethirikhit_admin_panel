@@ -18,7 +18,7 @@ class AuthUser with _$AuthUser {
     int? status, //0 == customer,1 == Admin
     String? token,
     String? age,
-    List<String>? area,
+    List<String>? areas,
     List<String>? nameList,
   }) = _AuthUser;
 

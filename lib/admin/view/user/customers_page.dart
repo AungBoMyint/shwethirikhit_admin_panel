@@ -178,6 +178,12 @@ class _CustomersPageState extends State<CustomersPage> {
                             style: titleTextStyle,
                           ),
                         ),
+                        DataColumn2(
+                          label: Text(
+                            'Email/Phone',
+                            style: titleTextStyle,
+                          ),
+                        ),
                         DataColumn(
                           label: Text(
                             'ROLE',
@@ -221,6 +227,16 @@ class _CustomersPageState extends State<CustomersPage> {
                               )
                             ],
                           )),
+                          //Email and Phone
+                          DataCell(
+                            Text(
+                              user.email?.isEmpty == true
+                                  ? user.phone ?? ""
+                                  : user.email ?? "",
+                              style: textTheme.displayMedium,
+                            ),
+                          ),
+                          //
                           DataCell(Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [

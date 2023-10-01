@@ -171,6 +171,24 @@ class AddCustomerPage extends StatelessWidget {
                                 ),
                               ),
                               verticalSpace(),
+                              //Phone
+                              SizedBox(
+                                child: TextFormField(
+                                  validator: (v) =>
+                                      crController.validator(v, "Phone"),
+                                  controller: crController.phoneController,
+                                  decoration: InputDecoration(
+                                    border: dropDownBorder(),
+                                    disabledBorder: dropDownBorder(),
+                                    focusedBorder: dropDownBorder(),
+                                    enabledBorder: dropDownBorder(),
+                                    labelText: "Phone",
+                                    labelStyle: labelStyle,
+                                    floatingLabelStyle: floatingLabelStyle,
+                                  ),
+                                ),
+                              ),
+                              verticalSpace(),
                               //password
                               SizedBox(
                                 child: TextFormField(
@@ -276,7 +294,7 @@ class AddCustomerPage extends StatelessWidget {
                               ), */
                               verticalSpace(),
                               //Select Role, Admin or Customer
-                              Obx(() {
+                              /* Obx(() {
                                 final r = crController.role.value;
                                 return LayoutBuilder(
                                     builder: (context, constraints) {
@@ -336,7 +354,7 @@ class AddCustomerPage extends StatelessWidget {
                                       )
                                     : const SizedBox();
                               }),
-                              verticalSpace(),
+                              verticalSpace(), */
                               Obx(() {
                                 return Align(
                                   alignment: Alignment.bottomRight,

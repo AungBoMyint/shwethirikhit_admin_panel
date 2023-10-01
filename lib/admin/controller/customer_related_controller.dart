@@ -43,12 +43,37 @@ class CustomerRelatedController extends GetxController {
     }
   }
 
-  allUsersExceptCurrentQuery() => userCollectionReference()
+  Query<AuthUser> allUsersExceptCurrentQuery() => userCollectionReference()
       .where("id", isNotEqualTo: box.get(userIdKey))
       .orderBy("id")
       .orderBy("name")
       .orderBy("email")
       .limit(10);
+
+  //TODO:TO Delete In Production Mode
+  Future<void> deleteTestUsers() async {
+    showLoading(Get.context!);
+    try {
+      Query<Map<String, dynamic>> users = FirebaseFirestore.instance
+          .collection('users')
+          .where("name", isEqualTo: "");
+
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      users.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((document) {
+          batch.delete(document.reference);
+        });
+
+        return batch.commit();
+      });
+      hideLoading(Get.context!);
+    } catch (e) {
+      hideLoading(Get.context!);
+      Get.snackbar("Error Deleting Batch", "$e",
+          duration: Duration(minutes: 1));
+    }
+  }
 
   void setScrollListener(ScrollController scroll) {
     scroll.addListener(() {
@@ -89,6 +114,7 @@ class CustomerRelatedController extends GetxController {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController locationController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
 
   void setEditUser(AuthUser? user) {
     reset();
@@ -99,6 +125,7 @@ class CustomerRelatedController extends GetxController {
       //Make initialization
       userNameController.text = user.name;
       emailController.text = user.email ?? '';
+      phoneController.text = user.phone ?? "";
       passwordController.text = user.password ?? "";
       locationController.text = user.location ?? '';
       role.value = user.status == 0
@@ -113,7 +140,7 @@ class CustomerRelatedController extends GetxController {
           value: user.age ?? "",
         ),
       );
-      multiSelectedItems.value = user.area ?? <String>[];
+      multiSelectedItems.value = user.areas ?? <String>[];
     }
   }
 
@@ -123,6 +150,7 @@ class CustomerRelatedController extends GetxController {
     pickedImageError.value = "";
     userNameController.clear();
     emailController.clear();
+    phoneController.clear();
     passwordController.clear();
     locationController.clear();
     role.value = null;
@@ -175,10 +203,11 @@ class CustomerRelatedController extends GetxController {
 
   Future<void> addUser() async {
     final checkImage = checkPickImage();
-    final checkRoleError = checkRole();
+    /* final checkRoleError = checkRole(); */
     if ((form.currentState?.validate() == true) &&
-        checkImage &&
-        checkRoleError) {
+            checkImage /* &&
+        checkRoleError */
+        ) {
       log("Form is valid");
       showLoading(Get.context!);
       await Future.delayed(Duration.zero);
@@ -199,10 +228,11 @@ class CustomerRelatedController extends GetxController {
           name: userNameController.text,
           avatar: url,
           email: emailController.text,
+          phone: phoneController.text,
           password: passwordController.text,
           location: locationController.text,
           age: ageController.dropDownValue?.value,
-          area: multiSelectedItems.map((element) => element).toList(),
+          areas: multiSelectedItems.map((element) => element).toList(),
           lat: 0,
           long: 0,
           status: r,
@@ -242,10 +272,11 @@ class CustomerRelatedController extends GetxController {
         name: userNameController.text,
         avatar: pickedImage.value,
         email: emailController.text,
+        phone: phoneController.text,
         password: passwordController.text,
         location: locationController.text,
         age: ageController.dropDownValue?.value,
-        area: multiSelectedItems.map((element) => element).toList(),
+        areas: multiSelectedItems.map((element) => element).toList(),
         lat: 0,
         long: 0,
         status: role.value == Role.customer ? 0 : 1,
