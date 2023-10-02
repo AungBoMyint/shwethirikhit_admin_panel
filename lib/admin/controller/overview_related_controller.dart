@@ -32,7 +32,7 @@ class OverviewRelatedController extends GetxController {
 
   getNewsItems() async {
     if (newsItems.value!.getOrElse(() => 0) == 0) {
-      final aggreCount = await allExpertQuery().count().get();
+      final aggreCount = await expertsCollection().count().get();
       newsItems.value = right(aggreCount.count);
     }
   }
@@ -74,7 +74,7 @@ class OverviewRelatedController extends GetxController {
 
   getAffirmationMusics() async {
     if (affirmationsMusics.value!.getOrElse(() => 0) == 0) {
-      final aggreCount = await allAffirmationsMusicsQuery().count().get();
+      final aggreCount = await musicCollection().count().get();
       affirmationsMusics.value = right(aggreCount.count);
     }
   }

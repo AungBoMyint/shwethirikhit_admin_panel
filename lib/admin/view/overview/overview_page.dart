@@ -298,7 +298,7 @@ class _OverviewPageState extends State<OverviewPage> {
                                       ? const Color(0XFFCFF466)
                                       : Colors.black,
                               topData: "Total Users",
-                              titleData: "$r O",
+                              titleData: "$r",
                               subTitleData: "",
                             ),
                           );
