@@ -8,6 +8,7 @@ import '../../models/object_models/expert.dart';
 import '../../models/object_models/type.dart';
 import '../../service/query.dart';
 import '../utils/debouncer.dart';
+import '../utils/show_loading.dart';
 
 class NewsController extends GetxController {
   Either<ExpertModel, ExpertModel?> selectedExpertItem = right(null);
@@ -189,7 +190,10 @@ class NewsController extends GetxController {
           itemsScrollLoading.value = true;
           debugPrint("************ExpertModels Pagination are fetching......");
           allExpertQuery()
-              .startAfter([expertModels.last.dateTime?.toIso8601String()])
+              .startAfter([
+                expertModels.last.name,
+                expertModels.last.dateTime /* ?.toIso8601String() */
+              ])
               .get()
               .then((value) {
                 expertModels.addAll(value.docs.map((e) => e.data()).toList());
@@ -212,6 +216,31 @@ class NewsController extends GetxController {
   Future<void> startGetTypes() async {
     if (types.isEmpty) {
       await getTypes(homeTypeQuery);
+    }
+  }
+
+  Future<void> deleteAllTestItems() async {
+    showLoading(Get.context!);
+    await Future.delayed(Duration(milliseconds: 100));
+    try {
+      Query<Map<String, dynamic>> users = FirebaseFirestore.instance
+          .collection('experts')
+          .where("description", isEqualTo: "description");
+
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      users.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((document) {
+          batch.delete(document.reference);
+        });
+
+        return batch.commit();
+      });
+      hideLoading(Get.context!);
+    } catch (e) {
+      hideLoading(Get.context!);
+      Get.snackbar("Error Deleting Batch", "$e",
+          duration: Duration(minutes: 1));
     }
   }
 

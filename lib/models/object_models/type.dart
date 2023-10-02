@@ -21,7 +21,7 @@ class ItemType {
   factory ItemType.fromJson(Map<String, dynamic> json) => ItemType(
         id: json["id"],
         name: json["name"],
-        dateTime: DateTime.tryParse(json["dateTime"]) ?? DateTime.now(),
+        dateTime: DateTime.parse(json["dateTime"] as String),
         order: json["order"],
         nameList: json["nameList"] ?? <String>[],
       );

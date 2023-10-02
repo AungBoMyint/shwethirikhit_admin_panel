@@ -302,7 +302,8 @@ class _ItemAddPageState extends State<ItemAddPage> {
                                         jobDescription: "",
                                         propertyAddress: "",
                                         nameList: subName,
-                                        dateTime: DateTime.now(),
+                                        dateTime:
+                                            DateTime.now().toIso8601String(),
                                       );
                                       upload<ExpertModel>(
                                           expertsDocument(item.id!),
@@ -341,7 +342,7 @@ class _ItemAddPageState extends State<ItemAddPage> {
                                                 .selectedExpertItem
                                                 .getOrElse(() => null)
                                                 ?.dateTime ??
-                                            DateTime.now(),
+                                            DateTime.now().toIso8601String(),
                                       );
                                       edit<ExpertModel>(
                                           expertsDocument(item.id!),

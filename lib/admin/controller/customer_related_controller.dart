@@ -48,7 +48,7 @@ class CustomerRelatedController extends GetxController {
       .orderBy("id")
       .orderBy("name")
       .orderBy("email")
-      .limit(10);
+      .limit(12);
 
   //TODO:TO Delete In Production Mode
   Future<void> deleteTestUsers() async {
